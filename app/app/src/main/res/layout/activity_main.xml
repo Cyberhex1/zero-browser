@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Padding keeps everything inside a ~5% overscan-safe area. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:paddingHorizontal="@dimen/overscan_h"
+    android:paddingVertical="@dimen/overscan_v">
+
+    <org.mozilla.geckoview.GeckoView
+        android:id="@+id/gecko"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:focusable="true"
+        android:focusableInTouchMode="true" />
+
+    <ProgressBar
+        android:id="@+id/progress"
+        style="@android:style/Widget.Material.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="6dp"
+        android:layout_gravity="top"
+        android:max="100"
+        android:progressTint="#FFD54F"
+        android:visibility="gone" />
+
+    <FrameLayout
+        android:id="@+id/popup_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#B3000000"
+        android:paddingHorizontal="140dp"
+        android:paddingVertical="24dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#202124"
+            android:orientation="vertical"
+            android:padding="8dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingBottom="6dp"
+                android:text="@string/popup_hint"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp" />
+
+            <org.mozilla.geckoview.GeckoView
+                android:id="@+id/popup_gecko"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:background="#FFFFFF"
+                android:focusable="true"
+                android:focusableInTouchMode="true" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/top_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:background="#F2202124"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn_back"
+                style="@style/TvButton"
+                android:text="@string/back" />
+
+            <Button
+                android:id="@+id/btn_forward"
+                style="@style/TvButton"
+                android:text="@string/forward" />
+
+            <Button
+                android:id="@+id/btn_reload"
+                style="@style/TvButton"
+                android:text="@string/reload" />
+
+            <Button
+                android:id="@+id/btn_home"
+                style="@style/TvButton"
+                android:text="@string/home" />
+
+            <EditText
+                android:id="@+id/url"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/focus_bg"
+                android:hint="@string/url_hint"
+                android:imeOptions="actionGo"
+                android:importantForAutofill="no"
+                android:inputType="textUri"
+                android:minHeight="56dp"
+                android:paddingHorizontal="18dp"
+                android:selectAllOnFocus="true"
+                android:singleLine="true"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#99FFFFFF"
+                android:textSize="20sp" />
+
+            <Button
+                android:id="@+id/btn_addons"
+                style="@style/TvButton"
+                android:text="@string/addons" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/action_wrap"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="8dp"
+                android:text="@string/extensions"
+                android:textColor="#CCFFFFFF"
+                android:textSize="18sp" />
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:id="@+id/action_row"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+        </LinearLayout>
+    </LinearLayout>
+
+    <app.tvbrowser.CursorView
+        android:id="@+id/cursor"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+</FrameLayout>

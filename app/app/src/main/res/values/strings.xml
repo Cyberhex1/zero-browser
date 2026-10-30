@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Placeholder product name; rename here and applicationId in app/build.gradle.kts. -->
+    <string name="app_name">TV Browser</string>
+    <string name="back">Back</string>
+    <string name="forward">Forward</string>
+    <string name="reload">Reload</string>
+    <string name="home">Home</string>
+    <string name="addons">Add-ons</string>
+    <string name="extensions">Extensions:</string>
+    <string name="url_hint">Search or type a web address</string>
+    <string name="popup_hint">Extension panel. Press Back to close.</string>
+</resources>
