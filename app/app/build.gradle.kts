@@ -18,7 +18,7 @@ val keystoreProps = Properties().apply {
 
 android {
     namespace = "app.tvbrowser"
-    compileSdk = 37
+    compileSdk { version = release(37) { minorApiLevel = 2 } }
 
     defaultConfig {
         applicationId = appId
@@ -53,6 +53,13 @@ android {
         release {
             isMinifyEnabled = false
             signingConfig = signingConfigs.findByName("release")
+        }
+    }
+
+    // Compress GeckoView's native libraries: roughly halves the download for Fire TV sticks.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
         }
     }
 
