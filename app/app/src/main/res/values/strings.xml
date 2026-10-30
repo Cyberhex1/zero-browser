@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Placeholder product name; rename here and applicationId in app/build.gradle.kts. -->
-    <string name="app_name">TV Browser</string>
+    <!-- Product name; applicationId lives in app/build.gradle.kts. -->
+    <string name="app_name">Zero Browser</string>
     <string name="back">Back</string>
     <string name="forward">Forward</string>
     <string name="reload">Reload</string>

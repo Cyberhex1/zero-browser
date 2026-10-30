@@ -15,5 +15,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "TVBrowser"
+rootProject.name = "ZeroBrowser"
 include(":app")

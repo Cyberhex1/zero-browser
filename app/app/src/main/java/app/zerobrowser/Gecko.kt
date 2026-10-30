@@ -1,4 +1,4 @@
-package app.tvbrowser
+package app.zerobrowser
 
 import android.app.Activity
 import android.content.Context

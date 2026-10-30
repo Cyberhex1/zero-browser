@@ -1,4 +1,4 @@
-package app.tvbrowser
+package app.zerobrowser
 
 import org.mozilla.geckoview.AllowOrDeny
 import org.mozilla.geckoview.GeckoResult

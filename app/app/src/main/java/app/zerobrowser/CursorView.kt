@@ -1,4 +1,4 @@
-package app.tvbrowser
+package app.zerobrowser
 
 import android.content.Context
 import android.graphics.Canvas

@@ -1,5 +1,5 @@
 # Draws the project icon (docs/icon.png, 512x512) and derives the launcher icons and TV banner from it.
-# Flat placeholder art: a TV with a globe on screen and a puzzle piece for add-ons.
+# Flat art: a TV with a globe on screen and a puzzle piece for add-ons.
 Add-Type -AssemblyName System.Drawing
 $root = Split-Path $PSScriptRoot
 $res = Join-Path $root 'app\app\src\main\res'
@@ -84,5 +84,5 @@ DrawIcon $gb 8 26 128 $false
 $font = New-Object System.Drawing.Font 'Segoe UI', 34, ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
 $sf = New-Object System.Drawing.StringFormat
 $sf.LineAlignment = 'Center'
-$gb.DrawString("TV`nBrowser", $font, [System.Drawing.Brushes]::White, [System.Drawing.RectangleF]::new(144, 0, 176, 180), $sf)
+$gb.DrawString("Zero`nBrowser", $font, [System.Drawing.Brushes]::White, [System.Drawing.RectangleF]::new(144, 0, 176, 180), $sf)
 Save $bn (Join-Path $res 'drawable-xhdpi\banner.png')

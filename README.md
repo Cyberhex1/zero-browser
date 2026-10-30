@@ -1,12 +1,12 @@
-<p align="center"><img src="docs/icon.png" width="160" alt="TV Browser icon"></p>
+<p align="center"><img src="docs/icon.png" width="160" alt="Zero Browser icon"></p>
 
-# TV Browser
+# Zero Browser
 
 A web browser for Amazon Fire TV (and other Android TV devices) that you drive with the remote and that supports **add-ons**, including uBlock Origin.
 
 It is built on Mozilla's [GeckoView](https://geckoview.dev) (the Firefox engine), so it installs Firefox for Android add-ons from [addons.mozilla.org](https://addons.mozilla.org/android/).
 
-> "TV Browser" is a placeholder name. This is an early prototype (v0.1.0).
+> Early prototype (v0.1.1). Formerly "TV Browser": if you installed v0.1.0, uninstall it first, since Zero Browser is a separate app.
 
 ## Which APK do I need?
 
@@ -14,13 +14,13 @@ Each release has two APKs:
 
 | File | For |
 |---|---|
-| `TVBrowser-v0.1.0-armeabi-v7a.apk` | **Pick this one if unsure.** Works on every Fire TV Stick, including 64-bit ones running a 32-bit system. |
-| `TVBrowser-v0.1.0-arm64-v8a.apk` | 64-bit devices with a 64-bit system (e.g. newer Fire TV Cube, Google TV, NVIDIA Shield). Slightly faster there. |
+| `ZeroBrowser-v0.1.1-armeabi-v7a.apk` | **Pick this one if unsure.** Works on every Fire TV Stick, including 64-bit ones running a 32-bit system. |
+| `ZeroBrowser-v0.1.1-arm64-v8a.apk` | 64-bit devices with a 64-bit system (e.g. newer Fire TV Cube, Google TV, NVIDIA Shield). Slightly faster there. |
 
 Stable links that always point to the newest release:
 
-- 32-bit (safe choice): `https://github.com/Cyberhex1/tv-browser/releases/latest/download/TVBrowser-armeabi-v7a.apk`
-- 64-bit: `https://github.com/Cyberhex1/tv-browser/releases/latest/download/TVBrowser-arm64-v8a.apk`
+- 32-bit (safe choice): `https://github.com/Cyberhex1/zero-browser/releases/latest/download/ZeroBrowser-armeabi-v7a.apk`
+- 64-bit: `https://github.com/Cyberhex1/zero-browser/releases/latest/download/ZeroBrowser-arm64-v8a.apk`
 
 ## Install on a Fire TV with the Downloader app
 
@@ -30,7 +30,7 @@ Stable links that always point to the newest release:
 3. In Developer Options, open **Install unknown apps** and turn it **on** for **Downloader**.
 4. Open Downloader, type the 32-bit link above into the URL box and press **Go**.
 5. When the download finishes, choose **Install**. You can delete the APK file afterwards.
-6. TV Browser now appears under **Your Apps & Channels**.
+6. Zero Browser now appears under **Your Apps & Channels**.
 
 To update later, repeat steps 4–5. The new version installs over the old one and keeps your add-ons.
 
