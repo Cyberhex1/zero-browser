@@ -1,14 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Padding keeps everything inside a ~5% overscan-safe area. -->
+<!-- Web pages fill the screen; root padding is the optional "Screen border" setting.
+     Our own UI (top bar, Zero Home) keeps a safe-area margin of its own. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000"
-    android:paddingLeft="@dimen/overscan_h"
-    android:paddingRight="@dimen/overscan_h"
-    android:paddingTop="@dimen/overscan_v"
-    android:paddingBottom="@dimen/overscan_v">
+    android:background="#000000">
 
     <org.mozilla.geckoview.GeckoView
         android:id="@+id/gecko"
@@ -71,7 +68,12 @@
         android:layout_height="match_parent"
         android:background="#121316"
         android:clipChildren="false"
+        android:clipToPadding="false"
         android:fillViewport="true"
+        android:paddingLeft="@dimen/overscan_h"
+        android:paddingRight="@dimen/overscan_h"
+        android:paddingTop="@dimen/overscan_v"
+        android:paddingBottom="@dimen/overscan_v"
         android:visibility="gone" />
 
     <LinearLayout
@@ -79,6 +81,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="top"
+        android:layout_marginLeft="@dimen/overscan_h"
+        android:layout_marginRight="@dimen/overscan_h"
+        android:layout_marginTop="@dimen/overscan_v"
         android:background="#F2202124"
         android:orientation="vertical"
         android:padding="12dp"

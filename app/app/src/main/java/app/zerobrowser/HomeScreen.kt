@@ -134,8 +134,9 @@ class HomeScreen(
             .firstOrNull { (it.tag as? TileRef)?.tile?.id == id }
 
     private fun tileWidth(): Int {
-        val usable = root.width.takeIf { it > 0 } ?: (activity.resources.displayMetrics.widthPixels -
-            2 * activity.resources.getDimensionPixelSize(R.dimen.overscan_h))
+        val usable = root.width.takeIf { it > 0 }?.let { it - root.paddingLeft - root.paddingRight }
+            ?: (activity.resources.displayMetrics.widthPixels -
+                2 * activity.resources.getDimensionPixelSize(R.dimen.overscan_h))
         // Minus the content padding (12dp each side) and each tile's margins (8dp each side).
         return (usable - activity.dp(24)) / COLUMNS - activity.dp(16)
     }

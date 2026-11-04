@@ -167,6 +167,11 @@ class SettingsActivity : Activity() {
             Prefs.desktopMode = it
         }
 
+        heading("Screen border", "Web pages fill the screen. If your TV cuts off the edges, add a border.")
+        choice("border", Prefs.ScreenBorder.entries.toList(), { it.label }, Prefs.screenBorder) {
+            Prefs.screenBorder = it
+        }
+
         heading("Cursor speed", "How fast the cursor moves while you hold the D-pad.")
         choice("speed", Prefs.CursorSpeed.entries.toList(), { it.label }, Prefs.cursorSpeed) { Prefs.cursorSpeed = it }
 
@@ -303,6 +308,8 @@ class SettingsActivity : Activity() {
             "Add-ons" to "Install add-ons like uBlock Origin from the Add-ons screen. Their buttons appear in the " +
                 "top bar; their panels open in a large box you use with the cursor. Back closes the panel.",
             "Typing on web pages" to "Move the cursor onto a text box and press Select; the on-screen keyboard opens.",
+            "Screen edges" to "Web pages fill the whole screen. If your TV cuts off the edges, choose " +
+                "Settings → General → Screen border.",
             "Cursor auto-hide" to "The cursor hides after a few seconds without input (change this under " +
                 "General). Press the D-pad to bring it back.",
         )

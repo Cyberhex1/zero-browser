@@ -167,6 +167,8 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         Gecko.setForeground(this)
+        applyScreenBorder()
+        hideSystemBars()
         rebuildActions()
         if (Gecko.purgeHistoryRequested) {
             Gecko.purgeHistoryRequested = false
@@ -179,6 +181,29 @@ class MainActivity : Activity() {
             if (currentUrl.isNotEmpty()) session.reload()
         }
         if (homeLayer.visibility == View.VISIBLE) home.refresh() else session.setActive(true)
+    }
+
+    /** Web pages fill the screen unless the user chose a border in Settings. */
+    private fun applyScreenBorder() {
+        val f = if (fullscreen) 0f else Prefs.screenBorder.fraction
+        val h = (resources.getDimensionPixelSize(R.dimen.overscan_h) * f).toInt()
+        val v = (resources.getDimensionPixelSize(R.dimen.overscan_v) * f).toInt()
+        root.setPadding(h, v, h, v)
+    }
+
+    @Suppress("DEPRECATION")
+    private fun hideSystemBars() {
+        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            or View.SYSTEM_UI_FLAG_FULLSCREEN
+            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            or View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) hideSystemBars()
     }
 
     // ---- Zero Home ----
@@ -610,9 +635,7 @@ class MainActivity : Activity() {
 
         override fun onFullScreen(session: GeckoSession, fullScreen: Boolean) {
             fullscreen = fullScreen
-            val h = if (fullScreen) 0 else resources.getDimensionPixelSize(R.dimen.overscan_h)
-            val v = if (fullScreen) 0 else resources.getDimensionPixelSize(R.dimen.overscan_v)
-            root.setPadding(h, v, h, v)
+            applyScreenBorder()
             if (fullScreen) cursor.visibility = View.INVISIBLE
         }
 

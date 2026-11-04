@@ -6,7 +6,7 @@ A web browser for Amazon Fire TV (and other Android TV devices) that you drive w
 
 It is built on Mozilla's [GeckoView](https://geckoview.dev) (the Firefox engine), so it installs Firefox for Android add-ons from [addons.mozilla.org](https://addons.mozilla.org/android/).
 
-> Early prototype (v0.2.0). Formerly "TV Browser": if you installed v0.1.0, uninstall it first, since Zero Browser is a separate app.
+> Early prototype (v0.2.1). Formerly "TV Browser": if you installed v0.1.0, uninstall it first, since Zero Browser is a separate app.
 
 ## Which APK do I need?
 
@@ -42,7 +42,8 @@ To update later, repeat steps 4–5. The new version installs over the old one a
 - **Save to Home**: the ★ button in the top bar pins the current page to Zero Home, with a screenshot of the page as its tile.
 - **Settings**: home page (Zero Home or any address), search engine (Google, DuckDuckGo, Bing), desktop or mobile sites, cursor speed and hide delay, clearing history / cookies / saved pages, and a built-in **Controls** guide.
 - **Add-ons**: Firefox for Android add-ons such as uBlock Origin, installed with one press.
-- A remote-driven cursor for any website.
+- A remote-driven cursor for any website. Web pages fill the whole screen; if your TV cuts off the edges, turn on **Settings → General → Screen border** (Small or Large).
+- Built for low-memory TV sticks: on devices with under 3 GB of RAM it uses mobile sites by default (desktop is one setting away) and a single page process, and the first launch offers to install uBlock Origin.
 
 ## Using it with the remote
 
@@ -56,7 +57,7 @@ To update later, repeat steps 4–5. The new version installs over the old one a
 | On Zero Home and in menus | D-pad moves between items, Select opens or presses. |
 | Typing on web pages | Move the cursor onto a text box and press Select; the keyboard opens. |
 
-The cursor hides after a few seconds without input (adjustable in Settings); press the D-pad to bring it back. The same guide is in **Settings → Controls**.
+The cursor hides after a few seconds without input (adjustable in Settings); press the D-pad to bring it back. If the edges of pages are cut off on your TV, use Settings → General → Screen border. The same guide is in **Settings → Controls**.
 
 ## Add-ons
 

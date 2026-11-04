@@ -76,6 +76,17 @@ object Prefs {
         get() = prefs.getBoolean("adBlockOffered", false)
         set(value) = prefs.edit().putBoolean("adBlockOffered", value).apply()
 
+    /** Black border around web pages, for TVs that cut off the picture edges (overscan). */
+    enum class ScreenBorder(val label: String, val fraction: Float) {
+        OFF("Off", 0f),
+        SMALL("Small", 0.5f),
+        LARGE("Large", 1f),
+    }
+
+    var screenBorder: ScreenBorder
+        get() = ScreenBorder.entries.firstOrNull { it.name == prefs.getString("border", null) } ?: ScreenBorder.OFF
+        set(value) = prefs.edit().putString("border", value.name).apply()
+
     /** Seconds without input before the cursor hides; 0 = never. */
     var cursorHideSeconds: Int
         get() = prefs.getInt("cursorHide", 6)
