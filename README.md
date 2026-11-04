@@ -6,7 +6,7 @@ A web browser for Amazon Fire TV (and other Android TV devices) that you drive w
 
 It is built on Mozilla's [GeckoView](https://geckoview.dev) (the Firefox engine), so it installs Firefox for Android add-ons from [addons.mozilla.org](https://addons.mozilla.org/android/).
 
-> Early prototype (v0.1.3). Formerly "TV Browser": if you installed v0.1.0, uninstall it first, since Zero Browser is a separate app.
+> Early prototype (v0.2.0). Formerly "TV Browser": if you installed v0.1.0, uninstall it first, since Zero Browser is a separate app.
 
 ## Which APK do I need?
 
@@ -36,15 +36,27 @@ If the installer says **"There was a problem parsing the package"**, your Fire O
 
 To update later, repeat steps 4–5. The new version installs over the old one and keeps your add-ons.
 
+## Features
+
+- **Zero Home**: a TV home screen with a big search/address box, a **Saved** row of page tiles and a **Recent** row of the last 10 pages. Hold Select (or press Menu) on a tile to open, rename, move or remove it; "+ Add a page" adds one by address.
+- **Save to Home**: the ★ button in the top bar pins the current page to Zero Home, with a screenshot of the page as its tile.
+- **Settings**: home page (Zero Home or any address), search engine (Google, DuckDuckGo, Bing), desktop or mobile sites, cursor speed and hide delay, clearing history / cookies / saved pages, and a built-in **Controls** guide.
+- **Add-ons**: Firefox for Android add-ons such as uBlock Origin, installed with one press.
+- A remote-driven cursor for any website.
+
 ## Using it with the remote
 
 | Button | Does |
 |---|---|
-| D-pad | Moves the on-screen cursor (hold to speed up). Push against an edge to scroll the page. |
-| Select (centre) | Clicks where the cursor is. |
-| Back | Goes back a page. On the first page it asks whether to exit. |
-| Menu (☰) | Shows or hides the top bar: Back, Forward, Reload, Home, address bar and **Add-ons**. Extension buttons appear here too. |
-| Rewind / Fast-forward | Scroll up / down a page. |
+| D-pad | Moves the cursor. Tap for small steps; hold to move faster. Push against a screen edge to scroll the page. |
+| Select (centre) | Clicks where the cursor is. Hold for a long-press. |
+| Rewind / Fast-forward | Scroll up / down one screen. |
+| Back | Goes back a page; from the first page it returns to Zero Home. Also closes the top bar, extension panels and fullscreen video. On Zero Home it asks whether to exit. |
+| Menu (☰) | Shows or hides the top bar: address bar, Back, Forward, Reload, Home, ★ Save to Home, Add-ons, Settings. On Zero Home it opens the options for the selected tile. |
+| On Zero Home and in menus | D-pad moves between items, Select opens or presses. |
+| Typing on web pages | Move the cursor onto a text box and press Select; the keyboard opens. |
+
+The cursor hides after a few seconds without input (adjustable in Settings); press the D-pad to bring it back. The same guide is in **Settings → Controls**.
 
 ## Add-ons
 

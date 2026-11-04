@@ -24,6 +24,7 @@ class SettingsActivity : Activity() {
     }
 
     private lateinit var pane: LinearLayout
+    private val menuButtons = mutableMapOf<Pane, Button>()
     private lateinit var paneScroll: ScrollView
     private var current: Pane? = null
 
@@ -45,7 +46,8 @@ class SettingsActivity : Activity() {
             b.layoutParams = LinearLayout.LayoutParams(dp(240), LinearLayout.LayoutParams.WRAP_CONTENT)
                 .apply { setMargins(dp(6), dp(6), dp(6), dp(6)) }
             b.gravity = Gravity.CENTER_VERTICAL or Gravity.START
-            b.setOnFocusChangeListener { _, focused -> if (focused) show(p) }
+            b.setOnFocusChangeListener { _, focused -> if (focused && current != p) show(p) }
+            menuButtons[p] = b
             menu.addView(b)
         }
         menu.addView(tvButton("Done") { finish() }.apply {
@@ -83,6 +85,8 @@ class SettingsActivity : Activity() {
 
     private fun show(p: Pane, keepFocusTag: String? = null) {
         current = p
+        // The open category stays yellow while focus is in the right pane.
+        menuButtons.forEach { (k, b) -> b.setTextColor(if (k == p) Color.rgb(255, 213, 79) else Color.WHITE) }
         pane.removeAllViews()
         paneScroll.scrollTo(0, 0)
         pane.addView(tvText(p.label, 26f, bold = true).apply { setPadding(dp(6), 0, 0, dp(8)) })
@@ -113,7 +117,10 @@ class SettingsActivity : Activity() {
 
     private fun buttons(vararg b: Button) {
         val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        b.forEach { row.addView(it) }
+        b.forEach {
+            it.setSingleLine()
+            row.addView(it)
+        }
         pane.addView(row)
     }
 
@@ -164,7 +171,7 @@ class SettingsActivity : Activity() {
         choice("speed", Prefs.CursorSpeed.entries.toList(), { it.label }, Prefs.cursorSpeed) { Prefs.cursorSpeed = it }
 
         heading("Hide cursor after", "The cursor reappears as soon as you press the D-pad.")
-        choice("hide", listOf(3, 6, 10, 0), { if (it == 0) "Never" else "$it seconds" }, Prefs.cursorHideSeconds) {
+        choice("hide", listOf(3, 6, 10, 0), { if (it == 0) "Never" else "$it sec" }, Prefs.cursorHideSeconds) {
             Prefs.cursorHideSeconds = it
         }
     }
@@ -247,7 +254,7 @@ class SettingsActivity : Activity() {
             row.addView(tvText(key, 18f, bold = true).apply {
                 setTextColor(Color.rgb(255, 213, 79))
                 gravity = Gravity.TOP
-            }, LinearLayout.LayoutParams(dp(230), LinearLayout.LayoutParams.WRAP_CONTENT))
+            }, LinearLayout.LayoutParams(dp(200), LinearLayout.LayoutParams.WRAP_CONTENT))
             row.addView(tvText(what, 18f).apply { gravity = Gravity.TOP },
                 LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
             pane.addView(row)
