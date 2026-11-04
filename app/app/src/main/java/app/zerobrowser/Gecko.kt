@@ -30,7 +30,12 @@ object Gecko {
 
     fun runtime(context: Context): GeckoRuntime {
         runtime?.let { return it }
+        Prefs.init(context)
         val settings = GeckoRuntimeSettings.Builder()
+            // Low-memory devices: one content process for all sites instead of one per site,
+            // and let Gecko react to memory pressure.
+            .fissionEnabled(!Prefs.lowMemoryDevice)
+            .lowMemoryDetection(true)
             .extensionsProcessEnabled(true)
             .extensionsWebAPIEnabled(true)
             .consoleOutput(false)

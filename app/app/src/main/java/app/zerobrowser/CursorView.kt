@@ -8,7 +8,11 @@ import android.graphics.Path
 import android.util.AttributeSet
 import android.view.View
 
-/** On-screen pointer drawn over the page. (px, py) is the tip, in this view's coordinates. */
+/**
+ * On-screen pointer. The view is only as big as the arrow and is moved with translation,
+ * so moving it doesn't redraw the rest of the screen. (px, py) is the tip, in the parent's
+ * content coordinates (inside its padding).
+ */
 class CursorView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     var px = -1f
         private set
@@ -21,7 +25,9 @@ class CursorView(context: Context, attrs: AttributeSet?) : View(context, attrs) 
             invalidate()
         }
 
-    private val size = 30 * resources.displayMetrics.density
+    private val density = resources.displayMetrics.density
+    private val size = 30 * density
+    private val pad = 3 * density
     private val arrow = Path().apply {
         val pts = floatArrayOf(0f, 0f, 0f, .86f, .22f, .67f, .37f, .99f, .5f, .93f, .35f, .62f, .62f, .62f)
         moveTo(pts[0] * size, pts[1] * size)
@@ -31,7 +37,7 @@ class CursorView(context: Context, attrs: AttributeSet?) : View(context, attrs) 
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = 2.5f * resources.displayMetrics.density
+        strokeWidth = 2.5f * density
         strokeJoin = Paint.Join.ROUND
         color = Color.BLACK
     }
@@ -45,16 +51,33 @@ class CursorView(context: Context, attrs: AttributeSet?) : View(context, attrs) 
     fun moveTo(x: Float, y: Float) {
         px = x
         py = y
-        invalidate()
+        translationX = x - pad
+        translationY = y - pad
     }
 
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        if (px < 0 || px > w || py > h) moveTo(w / 2f, h / 2f)
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val side = (size + 2 * pad).toInt() + 1
+        setMeasuredDimension(side, side)
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        // Start in the middle of the parent once it has a size.
+        (parent as? View)?.let { p ->
+            p.post {
+                if (px < 0) {
+                    moveTo(
+                        (p.width - p.paddingLeft - p.paddingRight) / 2f,
+                        (p.height - p.paddingTop - p.paddingBottom) / 2f,
+                    )
+                }
+            }
+        }
     }
 
     override fun onDraw(canvas: Canvas) {
         canvas.save()
-        canvas.translate(px, py)
+        canvas.translate(pad, pad)
         fill.color = if (pressedLook) Color.rgb(255, 213, 79) else Color.WHITE
         canvas.drawPath(arrow, fill)
         canvas.drawPath(arrow, stroke)

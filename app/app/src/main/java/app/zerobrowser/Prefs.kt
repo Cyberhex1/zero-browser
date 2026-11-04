@@ -16,8 +16,15 @@ object Prefs {
     private lateinit var prefs: SharedPreferences
     private lateinit var thumbDir: File
 
+    /** Under ~3 GB RAM (every Fire TV stick): lighter defaults. */
+    var lowMemoryDevice = false
+        private set
+
     fun init(context: Context) {
         if (::prefs.isInitialized) return
+        val am = context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+        val info = android.app.ActivityManager.MemoryInfo().also { am.getMemoryInfo(it) }
+        lowMemoryDevice = am.isLowRamDevice || info.totalMem < 3L * 1024 * 1024 * 1024
         prefs = context.applicationContext.getSharedPreferences("zero", Context.MODE_PRIVATE)
         thumbDir = File(context.applicationContext.filesDir, "thumbs").apply { mkdirs() }
     }
@@ -47,9 +54,12 @@ object Prefs {
         }
     }
 
-    /** Websites get the desktop layout (better on a big screen) unless turned off. */
+    /**
+     * Desktop layouts suit a big screen but are much heavier, so low-memory devices
+     * default to mobile sites. Either can be chosen in Settings.
+     */
     var desktopMode: Boolean
-        get() = prefs.getBoolean("desktop", true)
+        get() = prefs.getBoolean("desktop", !lowMemoryDevice)
         set(value) = prefs.edit().putBoolean("desktop", value).apply()
 
     enum class CursorSpeed(val label: String, val factor: Float) {
@@ -61,6 +71,10 @@ object Prefs {
     var cursorSpeed: CursorSpeed
         get() = CursorSpeed.entries.firstOrNull { it.name == prefs.getString("cursor", null) } ?: CursorSpeed.NORMAL
         set(value) = prefs.edit().putString("cursor", value.name).apply()
+
+    var adBlockOffered: Boolean
+        get() = prefs.getBoolean("adBlockOffered", false)
+        set(value) = prefs.edit().putBoolean("adBlockOffered", value).apply()
 
     /** Seconds without input before the cursor hides; 0 = never. */
     var cursorHideSeconds: Int

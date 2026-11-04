@@ -110,6 +110,35 @@ class MainActivity : Activity() {
         Gecko.openTab = { url -> runOnUiThread { open(url) } }
         rebuildActions()
         bumpCursor()
+        if (!Prefs.adBlockOffered) handler.postDelayed({ offerAdBlocker() }, 1500)
+    }
+
+    /** First run only: ad blocking makes pages much lighter on TV sticks. */
+    private fun offerAdBlocker() {
+        if (isFinishing) return
+        Prefs.adBlockOffered = true
+        val controller = Gecko.runtime(this).webExtensionController
+        controller.list().accept({ list ->
+            if (list.orEmpty().any { it.id == UBLOCK_ID }) return@accept
+            tvDialog(this)
+                .setTitle("Block ads?")
+                .setMessage(
+                    "uBlock Origin blocks ads and trackers, so pages load faster and use less memory. " +
+                        "You can remove it any time under Add-ons.",
+                )
+                .setPositiveButton("Install uBlock Origin") { _, _ ->
+                    controller.install(UBLOCK_XPI).accept(
+                        { toast("uBlock Origin added") },
+                        { e -> if ((e as? org.mozilla.geckoview.WebExtension.InstallException)?.code !=
+                                org.mozilla.geckoview.WebExtension.InstallException.ErrorCodes.ERROR_USER_CANCELED) {
+                                toast("Couldn't install uBlock Origin")
+                            }
+                        },
+                    )
+                }
+                .setNegativeButton("Not now", null)
+                .show()
+        }, { })
     }
 
     private fun openSession() {
@@ -149,7 +178,7 @@ class MainActivity : Activity() {
             session.settings.viewportMode = if (appliedDesktopMode) VIEWPORT_DESKTOP else VIEWPORT_MOBILE
             if (currentUrl.isNotEmpty()) session.reload()
         }
-        if (homeLayer.visibility == View.VISIBLE) home.refresh()
+        if (homeLayer.visibility == View.VISIBLE) home.refresh() else session.setActive(true)
     }
 
     // ---- Zero Home ----
@@ -229,6 +258,7 @@ class MainActivity : Activity() {
 
     override fun onPause() {
         mover.clear()
+        session.setActive(false)
         super.onPause()
     }
 
@@ -319,13 +349,13 @@ class MainActivity : Activity() {
 
     private fun targetSession(): GeckoSession? = target().second
 
-    /** Offset of [view] relative to the cursor view, so cursor coordinates map onto it. */
+    /** Offset of [view] in cursor coordinates (the cursor's parent, inside its padding). */
     private fun offsetOf(view: View): Pair<Float, Float> {
         val a = IntArray(2)
         val b = IntArray(2)
         view.getLocationOnScreen(a)
-        cursor.getLocationOnScreen(b)
-        return (a[0] - b[0]).toFloat() to (a[1] - b[1]).toFloat()
+        root.getLocationOnScreen(b)
+        return (a[0] - b[0] - root.paddingLeft).toFloat() to (a[1] - b[1] - root.paddingTop).toFloat()
     }
 
     private fun moveCursor(dx: Float, dy: Float) {
@@ -350,7 +380,8 @@ class MainActivity : Activity() {
                 PanZoomController.SCROLL_BEHAVIOR_AUTO,
             )
         }
-        hover()
+        val now = SystemClock.uptimeMillis()
+        if (now - lastHoverMs >= HOVER_INTERVAL_MS) hover()
     }
 
     private fun pointerEvent(action: Int, downTime: Long, mouse: Boolean): Pair<GeckoView, MotionEvent> {
@@ -382,8 +413,11 @@ class MainActivity : Activity() {
         ev.recycle()
     }
 
+    private var lastHoverMs = 0L
+
     private fun hover() {
         val now = SystemClock.uptimeMillis()
+        lastHoverMs = now
         val (view, ev) = pointerEvent(MotionEvent.ACTION_HOVER_MOVE, now, mouse = true)
         view.dispatchGenericMotionEvent(ev)
         ev.recycle()
@@ -436,6 +470,7 @@ class MainActivity : Activity() {
         override fun doFrame(frameTimeNanos: Long) {
             if (!(left || right || up || down)) {
                 running = false
+                hover() // final position, since moves send hover only every HOVER_INTERVAL_MS
                 return
             }
             val held = (frameTimeNanos - startNanos) / 1e9f
@@ -585,7 +620,18 @@ class MainActivity : Activity() {
         override fun onKill(session: GeckoSession) = restartSession()
     }
 
+    private var pageStartMs = 0L
+
     private val progressDelegate = object : GeckoSession.ProgressDelegate {
+        override fun onPageStart(session: GeckoSession, url: String) {
+            pageStartMs = SystemClock.elapsedRealtime()
+        }
+
+        override fun onPageStop(session: GeckoSession, success: Boolean) {
+            // One line per page load, for measuring performance on devices with adb logcat -s ZeroPerf.
+            android.util.Log.i("ZeroPerf", "page ${SystemClock.elapsedRealtime() - pageStartMs} ms ok=$success $currentUrl")
+        }
+
         override fun onProgressChange(session: GeckoSession, progress: Int) {
             this@MainActivity.progress.progress = progress
             this@MainActivity.progress.visibility = if (progress in 1..99) View.VISIBLE else View.GONE
@@ -605,6 +651,10 @@ class MainActivity : Activity() {
         private const val VIEWPORT_DESKTOP = GeckoSessionSettings.VIEWPORT_MODE_DESKTOP
         private const val VIEWPORT_MOBILE = GeckoSessionSettings.VIEWPORT_MODE_MOBILE
         private const val THUMB_W = 480
+        private const val HOVER_INTERVAL_MS = 120L
+        private const val UBLOCK_ID = "uBlock0@raymondhill.net"
+        private const val UBLOCK_XPI = "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
+
         private const val BASE_SPEED_DP = 3f
         private const val ACCEL_DP = 18f
         private const val MAX_SPEED_DP = 24f
