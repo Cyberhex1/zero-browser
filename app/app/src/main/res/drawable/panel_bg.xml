@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Top bar and extension panel: near-black panel with a thin cyan edge. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#F207070B" />
+    <stroke android:width="2dp" android:color="@color/cyan" />
+</shape>

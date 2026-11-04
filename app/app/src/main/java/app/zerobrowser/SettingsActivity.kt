@@ -36,11 +36,14 @@ class SettingsActivity : Activity() {
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            setBackgroundColor(Color.rgb(18, 19, 22))
+            setBackgroundColor(Arcade.GROUND)
             setPadding(h, v, h, v)
         }
         val menu = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        menu.addView(tvText("Settings", 30f, bold = true).apply { setPadding(dp(6), 0, 0, dp(16)) })
+        menu.addView(tvText("SETTINGS", 30f, bold = true).apply {
+            letterSpacing = 0.06f
+            setPadding(dp(6), 0, 0, dp(16))
+        })
         Pane.entries.forEach { p ->
             val b = tvButton(p.label) { focusPane() }
             b.layoutParams = LinearLayout.LayoutParams(dp(240), LinearLayout.LayoutParams.WRAP_CONTENT)
@@ -86,10 +89,13 @@ class SettingsActivity : Activity() {
     private fun show(p: Pane, keepFocusTag: String? = null) {
         current = p
         // The open category stays yellow while focus is in the right pane.
-        menuButtons.forEach { (k, b) -> b.setTextColor(if (k == p) Color.rgb(255, 213, 79) else Color.WHITE) }
+        menuButtons.forEach { (k, b) -> b.setTextColor(if (k == p) Arcade.PINK else Arcade.TEXT) }
         pane.removeAllViews()
         paneScroll.scrollTo(0, 0)
-        pane.addView(tvText(p.label, 26f, bold = true).apply { setPadding(dp(6), 0, 0, dp(8)) })
+        pane.addView(tvText(p.label.uppercase(), 26f, bold = true).apply {
+            letterSpacing = 0.06f
+            setPadding(dp(6), 0, 0, dp(8))
+        })
         when (p) {
             Pane.GENERAL -> general()
             Pane.PRIVACY -> privacy()
@@ -103,13 +109,10 @@ class SettingsActivity : Activity() {
     // ---- Building blocks ----
 
     private fun heading(title: String, subtitle: String? = null) {
-        pane.addView(tvText(title, 20f, bold = true).apply {
-            setTextColor(Color.rgb(255, 213, 79))
-            setPadding(dp(6), dp(18), 0, 0)
-        })
+        pane.addView(arcadeLabel(title, Arcade.CYAN).apply { setPadding(dp(6), dp(20), 0, 0) })
         subtitle?.let {
             pane.addView(tvText(it, 16f).apply {
-                setTextColor(Color.LTGRAY)
+                setTextColor(Arcade.TEXT_MUTED)
                 setPadding(dp(6), dp(2), 0, 0)
             })
         }
@@ -257,7 +260,7 @@ class SettingsActivity : Activity() {
                 ).apply { setMargins(dp(6), dp(4), dp(6), dp(4)) }
             }
             row.addView(tvText(key, 18f, bold = true).apply {
-                setTextColor(Color.rgb(255, 213, 79))
+                setTextColor(Arcade.CYAN)
                 gravity = Gravity.TOP
             }, LinearLayout.LayoutParams(dp(200), LinearLayout.LayoutParams.WRAP_CONTENT))
             row.addView(tvText(what, 18f).apply { gravity = Gravity.TOP },
@@ -275,7 +278,7 @@ class SettingsActivity : Activity() {
                 "This is the legacy build for Fire OS 5/6 (Android 5–7). Mozilla no longer updates " +
                     "this engine, so it gets no further security fixes.", 16f,
             ).apply {
-                setTextColor(Color.LTGRAY)
+                setTextColor(Arcade.TEXT_MUTED)
                 setPadding(dp(6), dp(4), 0, 0)
             })
         }
@@ -300,11 +303,11 @@ class SettingsActivity : Activity() {
                 "Also closes the top bar, extension panels and fullscreen video. On Zero Home it asks whether to exit.",
             "Menu ☰" to "Shows or hides the top bar. On Zero Home, opens the options for the selected tile.",
             "Top bar" to "Address bar (press Select to type, then Go), Back, Forward, Reload, Home, " +
-                "Save to Home, Add-ons and Settings. Move between them with the D-pad.",
+                "★ Save, Add-ons and Settings. Move between them with the D-pad.",
             "Zero Home" to "D-pad moves between tiles; Select opens one. Hold Select (or press Menu) on a tile " +
                 "to open, rename, move or remove it. Type in the search box to search or go to an address.",
-            "Save to Home" to "In the top bar: saves the current page as a tile on Zero Home. " +
-                "Press it again on a saved page to remove it.",
+            "★ Save" to "In the top bar: saves the current page as a tile on Zero Home. " +
+                "On a saved page it reads ★ Unsave and removes it.",
             "Add-ons" to "Install add-ons like uBlock Origin from the Add-ons screen. Their buttons appear in the " +
                 "top bar; their panels open in a large box you use with the cursor. Back closes the panel.",
             "Typing on web pages" to "Move the cursor onto a text box and press Select; the on-screen keyboard opens.",

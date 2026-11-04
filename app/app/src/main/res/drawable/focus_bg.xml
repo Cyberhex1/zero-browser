@@ -1,23 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Buttons and fields: square, outlined; focused = neon cyan ring with a soft outer glow. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_focused="true">
-        <shape android:shape="rectangle">
-            <solid android:color="#4A4F58" />
-            <stroke android:width="4dp" android:color="#FFD54F" />
-            <corners android:radius="10dp" />
-        </shape>
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/surface" />
+                    <stroke android:width="3dp" android:color="@color/cyan_glow" />
+                </shape>
+            </item>
+            <item android:bottom="3dp" android:left="3dp" android:right="3dp" android:top="3dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/surface" />
+                    <stroke android:width="3dp" android:color="@color/cyan" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+    <item android:state_activated="true">
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/surface" />
+                    <stroke android:width="3dp" android:color="@color/cyan_glow" />
+                </shape>
+            </item>
+            <item android:bottom="3dp" android:left="3dp" android:right="3dp" android:top="3dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/surface" />
+                    <stroke android:width="3dp" android:color="@color/cyan" />
+                </shape>
+            </item>
+        </layer-list>
     </item>
     <item android:state_enabled="false">
-        <shape android:shape="rectangle">
-            <solid android:color="#1E2024" />
-            <corners android:radius="10dp" />
-        </shape>
+        <inset android:inset="3dp">
+            <shape android:shape="rectangle">
+                <solid android:color="@color/ground" />
+                <stroke android:width="2dp" android:color="@color/line" />
+            </shape>
+        </inset>
     </item>
     <item>
-        <shape android:shape="rectangle">
-            <solid android:color="#2E3238" />
-            <stroke android:width="4dp" android:color="#00000000" />
-            <corners android:radius="10dp" />
-        </shape>
+        <inset android:inset="3dp">
+            <shape android:shape="rectangle">
+                <solid android:color="@color/surface" />
+                <stroke android:width="2dp" android:color="@color/line_strong" />
+            </shape>
+        </inset>
     </item>
 </selector>

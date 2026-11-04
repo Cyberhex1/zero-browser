@@ -78,7 +78,7 @@ class CursorView(context: Context, attrs: AttributeSet?) : View(context, attrs) 
     override fun onDraw(canvas: Canvas) {
         canvas.save()
         canvas.translate(pad, pad)
-        fill.color = if (pressedLook) Color.rgb(255, 213, 79) else Color.WHITE
+        fill.color = if (pressedLook) Arcade.PINK else Arcade.CYAN
         canvas.drawPath(arrow, fill)
         canvas.drawPath(arrow, stroke)
         canvas.restore()

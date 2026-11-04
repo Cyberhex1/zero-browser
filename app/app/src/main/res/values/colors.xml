@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Arcade palette: black ground, neon cyan and pink accents. -->
+<resources>
+    <color name="ground">#07070B</color>
+    <color name="surface">#101018</color>
+    <color name="line">#1F1F2A</color>
+    <color name="line_strong">#3A3A48</color>
+    <color name="text">#F5F5F7</color>
+    <color name="text_muted">#A0A0B4</color>
+    <color name="cyan">#22D3EE</color>
+    <color name="cyan_glow">#5522D3EE</color>
+    <color name="pink">#F472B6</color>
+</resources>

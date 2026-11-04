@@ -5,7 +5,7 @@
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000">
+    android:background="@color/ground">
 
     <org.mozilla.geckoview.GeckoView
         android:id="@+id/gecko"
@@ -21,7 +21,7 @@
         android:layout_height="6dp"
         android:layout_gravity="top"
         android:max="100"
-        android:progressTint="#FFD54F"
+        android:progressTint="@color/cyan"
         android:visibility="gone" />
 
     <FrameLayout
@@ -38,7 +38,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#202124"
+            android:background="@drawable/panel_bg"
             android:orientation="vertical"
             android:padding="8dp">
 
@@ -47,7 +47,7 @@
                 android:layout_height="wrap_content"
                 android:paddingBottom="6dp"
                 android:text="@string/popup_hint"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/text_muted"
                 android:textSize="18sp" />
 
             <org.mozilla.geckoview.GeckoView
@@ -66,7 +66,7 @@
         android:id="@+id/home_layer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#121316"
+        android:background="@color/ground"
         android:clipChildren="false"
         android:clipToPadding="false"
         android:fillViewport="true"
@@ -84,7 +84,7 @@
         android:layout_marginLeft="@dimen/overscan_h"
         android:layout_marginRight="@dimen/overscan_h"
         android:layout_marginTop="@dimen/overscan_v"
-        android:background="#F2202124"
+        android:background="@drawable/panel_bg"
         android:orientation="vertical"
         android:padding="12dp"
         android:visibility="gone">
@@ -104,8 +104,8 @@
             android:paddingRight="18dp"
             android:selectAllOnFocus="true"
             android:singleLine="true"
-            android:textColor="#FFFFFF"
-            android:textColorHint="#99FFFFFF"
+            android:textColor="@color/text"
+            android:textColorHint="@color/text_muted"
             android:textSize="20sp" />
 
         <LinearLayout
@@ -164,7 +164,7 @@
                 android:paddingLeft="8dp"
                 android:paddingRight="8dp"
                 android:text="@string/extensions"
-                android:textColor="#CCFFFFFF"
+                android:textColor="@color/text_muted"
                 android:textSize="18sp" />
 
             <HorizontalScrollView

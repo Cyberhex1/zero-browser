@@ -62,6 +62,7 @@ class MainActivity : Activity() {
         Prefs.init(this)
         setContentView(R.layout.activity_main)
         root = findViewById(R.id.root)
+        Arcade.applyFont(root)
         geckoView = findViewById(R.id.gecko)
         cursor = findViewById(R.id.cursor)
         progress = findViewById(R.id.progress)

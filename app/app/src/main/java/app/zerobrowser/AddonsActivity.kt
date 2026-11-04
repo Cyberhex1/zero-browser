@@ -52,7 +52,7 @@ class AddonsActivity : Activity() {
         }
         val header = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         header.addView(tvButton("Back") { finish() })
-        header.addView(tvText("  Add-ons", 30f, bold = true))
+        header.addView(tvText("  ADD-ONS", 30f, bold = true).apply { letterSpacing = 0.06f })
         content.addView(header)
 
         content.addView(section("Installed"))
@@ -60,13 +60,13 @@ class AddonsActivity : Activity() {
         content.addView(installedBox)
 
         content.addView(section("Popular add-ons (Firefox for Android)"))
-        status = tvText("Loading the list…", 18f).apply { setTextColor(Color.LTGRAY) }
+        status = tvText("Loading the list…", 18f).apply { setTextColor(Arcade.TEXT_MUTED) }
         content.addView(status)
         popularBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         content.addView(popularBox)
 
         setContentView(ScrollView(this).apply {
-            setBackgroundColor(Color.rgb(18, 19, 22))
+            setBackgroundColor(Arcade.GROUND)
             isFillViewport = true
             addView(content)
         })
@@ -86,9 +86,8 @@ class AddonsActivity : Activity() {
         super.onDestroy()
     }
 
-    private fun section(title: String) = tvText(title, 24f, bold = true).apply {
+    private fun section(title: String) = arcadeLabel(title, Arcade.CYAN).apply {
         setPadding(dp(6), dp(24), dp(6), dp(8))
-        setTextColor(Color.rgb(255, 213, 79))
     }
 
     private fun row(text: CharSequence, vararg buttons: Button): View =
@@ -117,7 +116,7 @@ class AddonsActivity : Activity() {
         if (installed.isEmpty()) {
             installedBox.addView(tvText("No add-ons yet. Pick one below.", 18f).apply {
                 setPadding(dp(6), 0, 0, 0)
-                setTextColor(Color.LTGRAY)
+                setTextColor(Arcade.TEXT_MUTED)
             })
             return
         }

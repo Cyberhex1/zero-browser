@@ -6,7 +6,7 @@ A web browser for Amazon Fire TV (and other Android TV devices) that you drive w
 
 It is built on Mozilla's [GeckoView](https://geckoview.dev) (the Firefox engine), so it installs Firefox for Android add-ons from [addons.mozilla.org](https://addons.mozilla.org/android/).
 
-> Early prototype (v0.2.1). Formerly "TV Browser": if you installed v0.1.0, uninstall it first, since Zero Browser is a separate app.
+> Early prototype (v0.3.0). Formerly "TV Browser": if you installed v0.1.0, uninstall it first, since Zero Browser is a separate app.
 
 ## Which APK do I need?
 
@@ -39,7 +39,8 @@ To update later, repeat steps 4–5. The new version installs over the old one a
 ## Features
 
 - **Zero Home**: a TV home screen with a big search/address box, a **Saved** row of page tiles and a **Recent** row of the last 10 pages. Hold Select (or press Menu) on a tile to open, rename, move or remove it; "+ Add a page" adds one by address.
-- **Save to Home**: the ★ button in the top bar pins the current page to Zero Home, with a screenshot of the page as its tile.
+- **Arcade look**: black screens, neon cyan and pink accents, square corners and glowing outlined tiles, set in Space Grotesk.
+- **★ Save**: the ★ button in the top bar pins the current page to Zero Home, with a screenshot of the page as its tile.
 - **Settings**: home page (Zero Home or any address), search engine (Google, DuckDuckGo, Bing), desktop or mobile sites, cursor speed and hide delay, clearing history / cookies / saved pages, and a built-in **Controls** guide.
 - **Add-ons**: Firefox for Android add-ons such as uBlock Origin, installed with one press.
 - A remote-driven cursor for any website. Web pages fill the whole screen; if your TV cuts off the edges, turn on **Settings → General → Screen border** (Small or Large).
@@ -53,7 +54,7 @@ To update later, repeat steps 4–5. The new version installs over the old one a
 | Select (centre) | Clicks where the cursor is. Hold for a long-press. |
 | Rewind / Fast-forward | Scroll up / down one screen. |
 | Back | Goes back a page; from the first page it returns to Zero Home. Also closes the top bar, extension panels and fullscreen video. On Zero Home it asks whether to exit. |
-| Menu (☰) | Shows or hides the top bar: address bar, Back, Forward, Reload, Home, ★ Save to Home, Add-ons, Settings. On Zero Home it opens the options for the selected tile. |
+| Menu (☰) | Shows or hides the top bar: address bar, Back, Forward, Reload, Home, ★ Save, Add-ons, Settings. On Zero Home it opens the options for the selected tile. |
 | On Zero Home and in menus | D-pad moves between items, Select opens or presses. |
 | Typing on web pages | Move the cursor onto a text box and press Select; the keyboard opens. |
 
@@ -92,3 +93,5 @@ keyPassword=...
 ## License
 
 App code: MPL-2.0. GeckoView is © Mozilla, MPL-2.0. This project is not affiliated with or endorsed by Mozilla or Amazon.
+
+The Space Grotesk font (© The Space Grotesk Project Authors) is bundled under the SIL Open Font License 1.1; see `app/app/src/main/assets/fonts/OFL.txt`.

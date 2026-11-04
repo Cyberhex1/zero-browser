@@ -3,8 +3,11 @@ package app.zerobrowser
 import android.app.Activity
 import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.text.InputType
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import android.text.TextUtils
 import android.view.Gravity
 import android.view.KeyEvent
@@ -36,7 +39,7 @@ class HomeScreen(
     private val search: EditText
     private val savedGrid: GridLayout
     private val recentLabel: TextView
-    private val recentGrid: GridLayout
+    private val recentList: LinearLayout
 
     init {
         val a = activity
@@ -51,24 +54,41 @@ class HomeScreen(
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
+        // "ZERO/BROWSER" wordmark with a pink slash.
+        val wordmark = SpannableString("ZERO/BROWSER").apply {
+            setSpan(ForegroundColorSpan(Arcade.PINK), 4, 5, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
         header.addView(
-            a.tvText(a.getString(R.string.app_name), 30f, bold = true),
+            a.tvText(wordmark, 32f, bold = true).apply { letterSpacing = 0.04f },
             LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f),
         )
         header.addView(a.tvButton("Add-ons") { onAddons() })
-        header.addView(a.tvButton("⚙  Settings") { onSettings() })
+        header.addView(a.tvButton("Settings") { onSettings() })
         content.addView(header)
 
+        // Terminal-style search box: a pink ">" prompt; the box lights up while the field has focus.
+        val searchBox = LinearLayout(a).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            background = a.getDrawable(R.drawable.focus_bg)
+            setPadding(a.dp(22), a.dp(6), a.dp(22), a.dp(6))
+        }
+        searchBox.addView(a.tvText(">", 24f, bold = true).apply {
+            setTextColor(Arcade.PINK)
+            setPadding(0, 0, a.dp(14), 0)
+        })
         search = EditText(a).apply {
-            hint = a.getString(R.string.url_hint)
-            setHintTextColor(0x99FFFFFF.toInt())
-            setTextColor(Color.WHITE)
-            textSize = 24f
+            hint = "search or type a web address_"
+            setHintTextColor(Arcade.TEXT_MUTED)
+            setTextColor(Arcade.TEXT)
+            typeface = Arcade.medium(a)
+            textSize = 22f
             setSingleLine()
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
             imeOptions = EditorInfo.IME_ACTION_GO
-            background = a.getDrawable(R.drawable.focus_bg)
-            setPadding(a.dp(22), a.dp(14), a.dp(22), a.dp(14))
+            background = null
+            setPadding(0, a.dp(10), 0, a.dp(10))
+            setOnFocusChangeListener { _, focused -> searchBox.isActivated = focused }
             setOnEditorActionListener { _, actionId, event ->
                 val enter = event?.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_UP
                 if (actionId == EditorInfo.IME_ACTION_GO || actionId == EditorInfo.IME_ACTION_DONE || enter) {
@@ -79,21 +99,22 @@ class HomeScreen(
                 }
             }
         }
-        content.addView(search, LinearLayout.LayoutParams(
+        searchBox.addView(search, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        content.addView(searchBox, LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT,
         ).apply { setMargins(a.dp(6), a.dp(10), a.dp(6), a.dp(6)) })
 
-        content.addView(sectionLabel("Saved"))
+        content.addView(sectionLabel("Saved", Arcade.CYAN))
         savedGrid = grid()
         content.addView(savedGrid)
 
-        recentLabel = sectionLabel("Recent")
+        recentLabel = sectionLabel("Recent", Arcade.PINK)
         content.addView(recentLabel)
-        recentGrid = grid()
-        content.addView(recentGrid)
+        recentList = LinearLayout(a).apply { orientation = LinearLayout.VERTICAL }
+        content.addView(recentList)
 
         content.addView(a.tvText("Hold Select (or press Menu ☰) on a tile for options.", 16f).apply {
-            setTextColor(Color.GRAY)
+            setTextColor(Arcade.TEXT_MUTED)
             setPadding(a.dp(6), a.dp(18), 0, 0)
         })
 
@@ -101,9 +122,8 @@ class HomeScreen(
         root.addView(content)
     }
 
-    private fun sectionLabel(text: String) = activity.tvText(text, 22f, bold = true).apply {
-        setTextColor(Color.rgb(255, 213, 79))
-        setPadding(activity.dp(6), activity.dp(18), 0, activity.dp(4))
+    private fun sectionLabel(text: String, color: Int) = activity.arcadeLabel(text, color).apply {
+        setPadding(activity.dp(6), activity.dp(20), 0, activity.dp(4))
     }
 
     private fun grid() = GridLayout(activity).apply {
@@ -117,10 +137,11 @@ class HomeScreen(
         fill(savedGrid, Prefs.tiles, Kind.SAVED)
         savedGrid.addView(addTile())
         val recents = Prefs.recents
-        fill(recentGrid, recents, Kind.RECENT)
+        recentList.removeAllViews()
+        recents.forEach { recentList.addView(recentRow(it)) }
         val showRecent = if (recents.isEmpty()) View.GONE else View.VISIBLE
         recentLabel.visibility = showRecent
-        recentGrid.visibility = showRecent
+        recentList.visibility = showRecent
 
         root.post {
             val target = focusId?.let { id -> findTileView(id) } ?: savedGrid.getChildAt(0)
@@ -129,7 +150,7 @@ class HomeScreen(
     }
 
     private fun findTileView(id: String): View? =
-        listOf(savedGrid, recentGrid).asSequence()
+        listOf<android.view.ViewGroup>(savedGrid, recentList).asSequence()
             .flatMap { g -> (0 until g.childCount).asSequence().map { g.getChildAt(it) } }
             .firstOrNull { (it.tag as? TileRef)?.tile?.id == id }
 
@@ -157,9 +178,9 @@ class HomeScreen(
             setMargins(activity.dp(8), activity.dp(8), activity.dp(8), activity.dp(8))
         }
         setOnFocusChangeListener { v, focused ->
-            v.animate().scaleX(if (focused) 1.07f else 1f).scaleY(if (focused) 1.07f else 1f)
+            v.animate().scaleX(if (focused) 1.06f else 1f).scaleY(if (focused) 1.06f else 1f)
                 .setDuration(120).start()
-            if (focused) v.elevation = activity.dp(8).toFloat() else v.elevation = 0f
+            v.elevation = if (focused) activity.dp(8).toFloat() else 0f
         }
     }
 
@@ -178,16 +199,25 @@ class HomeScreen(
                 scaleType = ImageView.ScaleType.CENTER_CROP
             }
         } else {
+            // Outlined neon letter tile.
+            val color = colorFor(tile.url)
             FrameLayout(a).apply {
-                setBackgroundColor(colorFor(tile.url))
+                background = GradientDrawable().apply {
+                    setColor(Arcade.GROUND)
+                    setStroke(a.dp(2), color)
+                }
                 addView(
-                    a.tvText(initialOf(tile), 36f, bold = true).apply { gravity = Gravity.CENTER },
+                    a.tvText(initialOf(tile), 44f, bold = true).apply {
+                        gravity = Gravity.CENTER
+                        setTextColor(color)
+                    },
                     FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT),
                 )
             }
         }
         frame.addView(art, LinearLayout.LayoutParams(thumbW, thumbH))
-        frame.addView(a.tvText(tile.title, 17f).apply {
+        frame.addView(a.tvText(tile.title.uppercase(), 15f).apply {
+            letterSpacing = 0.05f
             setSingleLine()
             ellipsize = TextUtils.TruncateAt.END
             setPadding(a.dp(2), a.dp(6), a.dp(2), 0)
@@ -204,13 +234,49 @@ class HomeScreen(
         frame.addView(
             a.tvText("+", 44f, bold = true).apply {
                 gravity = Gravity.CENTER
-                setTextColor(Color.LTGRAY)
+                setTextColor(Arcade.TEXT_MUTED)
+                background = GradientDrawable().apply {
+                    setColor(Arcade.GROUND)
+                    setStroke(a.dp(2), Arcade.LINE_STRONG, a.dp(8).toFloat(), a.dp(6).toFloat())
+                }
             },
             LinearLayout.LayoutParams(thumbW, thumbW * 9 / 16),
         )
-        frame.addView(a.tvText("Add a page", 18f).apply { setPadding(a.dp(2), a.dp(6), 0, 0) })
+        frame.addView(a.tvText("ADD A PAGE", 15f).apply {
+            letterSpacing = 0.05f
+            setTextColor(Arcade.TEXT_MUTED)
+            setPadding(a.dp(2), a.dp(6), 0, 0)
+        })
         frame.setOnClickListener { editTile(null) }
         return frame
+    }
+
+    /** A recently visited page as one list row: title on the left, site on the right. */
+    private fun recentRow(tile: Tile): View {
+        val a = activity
+        val row = LinearLayout(a).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            isFocusable = true
+            isClickable = true
+            background = a.getDrawable(R.drawable.focus_bg)
+            setPadding(a.dp(18), a.dp(12), a.dp(18), a.dp(12))
+            tag = TileRef(tile, Kind.RECENT)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT,
+            ).apply { setMargins(a.dp(4), a.dp(2), a.dp(4), a.dp(2)) }
+        }
+        row.addView(a.tvText(tile.title, 18f).apply {
+            setSingleLine()
+            ellipsize = TextUtils.TruncateAt.END
+        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        row.addView(a.tvText(Prefs.hostOf(tile.url), 16f).apply {
+            setTextColor(Arcade.TEXT_MUTED)
+            setPadding(a.dp(16), 0, 0, 0)
+        })
+        row.setOnClickListener { onOpen(tile.url) }
+        row.setOnLongClickListener { showOptions(row.tag as TileRef); true }
+        return row
     }
 
     /** Menu key on the home screen: options for the focused tile. */
@@ -306,14 +372,8 @@ class HomeScreen(
     private fun initialOf(tile: Tile): String =
         (tile.title.firstOrNull { it.isLetterOrDigit() } ?: '?').uppercaseChar().toString()
 
-    private fun colorFor(url: String): Int {
-        val palette = intArrayOf(
-            Color.rgb(30, 136, 229), Color.rgb(229, 57, 53), Color.rgb(67, 160, 71),
-            Color.rgb(142, 36, 170), Color.rgb(251, 140, 0), Color.rgb(0, 137, 123),
-            Color.rgb(84, 110, 122), Color.rgb(216, 27, 96),
-        )
-        return palette[(Prefs.hostOf(url).hashCode() and 0x7fffffff) % palette.size]
-    }
+    private fun colorFor(url: String): Int =
+        Arcade.NEON[(Prefs.hostOf(url).hashCode() and 0x7fffffff) % Arcade.NEON.size]
 
     companion object {
         private const val COLUMNS = 5
