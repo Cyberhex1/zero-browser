@@ -49,7 +49,8 @@ class MainActivity : Activity() {
 
     private val handler = Handler(Looper.getMainLooper())
     private val hideCursor = Runnable { cursor.visibility = View.INVISIBLE }
-    private val mover = CursorMover()
+    // Lazy: CursorMover reads resources, which aren't available until onCreate.
+    private val mover by lazy { CursorMover() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

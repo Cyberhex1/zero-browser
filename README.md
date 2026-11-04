@@ -6,7 +6,7 @@ A web browser for Amazon Fire TV (and other Android TV devices) that you drive w
 
 It is built on Mozilla's [GeckoView](https://geckoview.dev) (the Firefox engine), so it installs Firefox for Android add-ons from [addons.mozilla.org](https://addons.mozilla.org/android/).
 
-> Early prototype (v0.1.2). Formerly "TV Browser": if you installed v0.1.0, uninstall it first, since Zero Browser is a separate app.
+> Early prototype (v0.1.3). Formerly "TV Browser": if you installed v0.1.0, uninstall it first, since Zero Browser is a separate app.
 
 ## Which APK do I need?
 
@@ -20,7 +20,7 @@ First check your Fire OS version: **Settings → My Fire TV → About → Fire T
 
 If the installer says **"There was a problem parsing the package"**, your Fire OS is too old for the normal APK: use the legacy one.
 
-**About the legacy build:** Mozilla stopped supporting Android 5–7 after Firefox 144, so the legacy APK uses the GeckoView 144 engine (October 2025). It has all of Zero Browser's features, but **its engine gets no further security updates from Mozilla**. Use the normal APK whenever your device supports it. The files with `-v0.1.2-` in the name on each release are the same APKs with the version added.
+**About the legacy build:** Mozilla stopped supporting Android 5–7 after Firefox 144, so the legacy APK uses the GeckoView 144 engine (October 2025). It has all of Zero Browser's features, but **its engine gets no further security updates from Mozilla**. Use the normal APK whenever your device supports it. The files with a version number in the name on each release are the same APKs with the version added.
 
 ## Install on a Fire TV with the Downloader app
 
