@@ -25,6 +25,9 @@ object Gecko {
     /** Set by MainActivity: loads a URL an extension asked to open in a new tab. */
     var openTab: ((String) -> Unit)? = null
 
+    /** Set by Settings → Clear history; MainActivity purges its session history on resume. */
+    var purgeHistoryRequested = false
+
     fun runtime(context: Context): GeckoRuntime {
         runtime?.let { return it }
         val settings = GeckoRuntimeSettings.Builder()

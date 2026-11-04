@@ -23,7 +23,6 @@ import org.mozilla.geckoview.GeckoSessionSettings
 import org.mozilla.geckoview.GeckoView
 import org.mozilla.geckoview.PanZoomController
 import org.mozilla.geckoview.ScreenLength
-import java.net.URLEncoder
 import kotlin.math.min
 
 class MainActivity : Activity() {
@@ -38,13 +37,19 @@ class MainActivity : Activity() {
     private lateinit var actionRow: LinearLayout
     private lateinit var popupLayer: View
     private lateinit var popupView: GeckoView
+    private lateinit var homeLayer: View
+    private lateinit var home: HomeScreen
+    private lateinit var saveButton: android.widget.Button
 
     private lateinit var session: GeckoSession
     private var popupSession: GeckoSession? = null
 
     private var canGoBack = false
     private var canGoForward = false
-    private var currentUrl = HOME
+    private var currentUrl = ""
+    private var currentTitle: String? = null
+    private var fullscreen = false
+    private var appliedDesktopMode = true
     private var tapDownTime = 0L
 
     private val handler = Handler(Looper.getMainLooper())
@@ -54,6 +59,7 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Prefs.init(this)
         setContentView(R.layout.activity_main)
         root = findViewById(R.id.root)
         geckoView = findViewById(R.id.gecko)
@@ -65,18 +71,30 @@ class MainActivity : Activity() {
         actionRow = findViewById(R.id.action_row)
         popupLayer = findViewById(R.id.popup_layer)
         popupView = findViewById(R.id.popup_gecko)
+        homeLayer = findViewById(R.id.home_layer)
+        saveButton = findViewById(R.id.btn_save)
+        home = HomeScreen(
+            this,
+            findViewById(R.id.home_layer),
+            onOpen = { url -> open(url) },
+            onSettings = { openSettings() },
+            onAddons = { startActivity(Intent(this, AddonsActivity::class.java)) },
+        )
 
         openSession()
-        session.loadUri(intent?.dataString ?: HOME)
+        val start = intent?.dataString ?: Prefs.homePage
+        if (start != null) session.loadUri(start) else showHome()
 
         findViewById<View>(R.id.btn_back).setOnClickListener { session.goBack() }
         findViewById<View>(R.id.btn_forward).setOnClickListener { session.goForward() }
         findViewById<View>(R.id.btn_reload).setOnClickListener { session.reload(); hideBar() }
-        findViewById<View>(R.id.btn_home).setOnClickListener { session.loadUri(HOME); hideBar() }
+        findViewById<View>(R.id.btn_home).setOnClickListener { goHome() }
+        saveButton.setOnClickListener { toggleSaved() }
         findViewById<View>(R.id.btn_addons).setOnClickListener {
             hideBar()
             startActivity(Intent(this, AddonsActivity::class.java))
         }
+        findViewById<View>(R.id.btn_settings).setOnClickListener { openSettings() }
         urlField.setOnEditorActionListener { _, actionId, event ->
             val enter = event?.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_UP
             if (actionId == EditorInfo.IME_ACTION_GO || actionId == EditorInfo.IME_ACTION_DONE || enter) {
@@ -89,17 +107,18 @@ class MainActivity : Activity() {
 
         Gecko.actionsChanged = { runOnUiThread { rebuildActions() } }
         Gecko.popupHost = { toggle -> showPopup(toggle) }
-        Gecko.openTab = { url -> runOnUiThread { session.loadUri(url) } }
+        Gecko.openTab = { url -> runOnUiThread { open(url) } }
         rebuildActions()
         bumpCursor()
     }
 
     private fun openSession() {
         val runtime = Gecko.runtime(this)
+        appliedDesktopMode = Prefs.desktopMode
         session = GeckoSession(
             GeckoSessionSettings.Builder()
-                .userAgentMode(GeckoSessionSettings.USER_AGENT_MODE_DESKTOP)
-                .viewportMode(GeckoSessionSettings.VIEWPORT_MODE_DESKTOP)
+                .userAgentMode(if (appliedDesktopMode) USER_AGENT_DESKTOP else USER_AGENT_MOBILE)
+                .viewportMode(if (appliedDesktopMode) VIEWPORT_DESKTOP else VIEWPORT_MOBILE)
                 .build(),
         )
         session.navigationDelegate = navigation
@@ -113,18 +132,100 @@ class MainActivity : Activity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        intent.dataString?.let {
-            closePopup()
-            hideBar()
-            session.loadUri(it)
-        }
+        intent.dataString?.let { open(it) }
     }
 
     override fun onResume() {
         super.onResume()
         Gecko.setForeground(this)
         rebuildActions()
+        if (Gecko.purgeHistoryRequested) {
+            Gecko.purgeHistoryRequested = false
+            session.purgeHistory()
+        }
+        if (Prefs.desktopMode != appliedDesktopMode) {
+            appliedDesktopMode = Prefs.desktopMode
+            session.settings.userAgentMode = if (appliedDesktopMode) USER_AGENT_DESKTOP else USER_AGENT_MOBILE
+            session.settings.viewportMode = if (appliedDesktopMode) VIEWPORT_DESKTOP else VIEWPORT_MOBILE
+            if (currentUrl.isNotEmpty()) session.reload()
+        }
+        if (homeLayer.visibility == View.VISIBLE) home.refresh()
     }
+
+    // ---- Zero Home ----
+
+    /** Opens [url] in the page view, leaving Zero Home if it is showing. */
+    private fun open(url: String) {
+        closePopup()
+        hideBar()
+        hideHome()
+        session.loadUri(url)
+    }
+
+    private fun goHome() {
+        val page = Prefs.homePage
+        if (page != null) open(page) else showHome()
+    }
+
+    private fun showHome() {
+        closePopup()
+        hideBar()
+        mover.clear()
+        handler.removeCallbacks(hideCursor)
+        cursor.visibility = View.INVISIBLE
+        homeLayer.visibility = View.VISIBLE
+        session.setActive(false)
+        home.refresh()
+    }
+
+    private fun hideHome() {
+        if (homeLayer.visibility != View.VISIBLE) return
+        homeLayer.visibility = View.GONE
+        session.setActive(true)
+        geckoView.requestFocus()
+        bumpCursor()
+    }
+
+    private fun openSettings() {
+        hideBar()
+        startActivity(Intent(this, SettingsActivity::class.java))
+    }
+
+    /** Top bar "Save to Home": pins the current page with a thumbnail, or unpins it. */
+    private fun toggleSaved() {
+        val url = currentUrl.takeIf { it.startsWith("http") } ?: return
+        Prefs.savedTile(url)?.let { saved ->
+            Prefs.tiles = Prefs.tiles.filter { it.id != saved.id }
+            toast("Removed from Home")
+            updateSaveButton()
+            return
+        }
+        val tile = Tile(Prefs.newId(), currentTitle?.takeIf { it.isNotBlank() } ?: Prefs.hostOf(url), url)
+        Prefs.tiles = Prefs.tiles + tile
+        updateSaveButton()
+        toast("Saved to Home")
+        geckoView.capturePixels().accept({ bmp -> if (bmp != null) saveThumbnail(tile, bmp) }, { })
+    }
+
+    private fun saveThumbnail(tile: Tile, page: android.graphics.Bitmap) {
+        Thread {
+            // Top of the page at 16:9, scaled to tile size.
+            val h = min(page.height, page.width * 9 / 16)
+            val crop = android.graphics.Bitmap.createBitmap(page, 0, 0, page.width, h)
+            val thumb = android.graphics.Bitmap.createScaledBitmap(crop, THUMB_W, THUMB_W * 9 / 16, true)
+            Prefs.thumbFile(tile).outputStream().use {
+                thumb.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, it)
+            }
+        }.start()
+    }
+
+    private fun updateSaveButton() {
+        val saved = Prefs.savedTile(currentUrl) != null
+        saveButton.setText(if (saved) R.string.remove_from_home else R.string.save_to_home)
+        saveButton.isEnabled = currentUrl.startsWith("http")
+    }
+
+    private fun toast(msg: String) = android.widget.Toast.makeText(this, msg, android.widget.Toast.LENGTH_SHORT).show()
 
     override fun onPause() {
         mover.clear()
@@ -146,7 +247,9 @@ class MainActivity : Activity() {
         val down = event.action == KeyEvent.ACTION_DOWN
         when (event.keyCode) {
             KeyEvent.KEYCODE_MENU -> {
-                if (!down) toggleBar()
+                if (!down) {
+                    if (homeLayer.visibility == View.VISIBLE) home.onMenu() else toggleBar()
+                }
                 return true
             }
             KeyEvent.KEYCODE_BACK -> {
@@ -154,7 +257,10 @@ class MainActivity : Activity() {
                 return true
             }
         }
-        if (topBar.visibility == View.VISIBLE) return super.dispatchKeyEvent(event)
+        // Top bar and Zero Home use normal focus navigation instead of the cursor.
+        if (topBar.visibility == View.VISIBLE || homeLayer.visibility == View.VISIBLE) {
+            return super.dispatchKeyEvent(event)
+        }
 
         when (event.keyCode) {
             KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN,
@@ -190,14 +296,21 @@ class MainActivity : Activity() {
         when {
             popupLayer.visibility == View.VISIBLE -> closePopup()
             topBar.visibility == View.VISIBLE -> hideBar()
+            fullscreen -> session.exitFullScreen()
+            homeLayer.visibility == View.VISIBLE -> confirmExit()
             canGoBack -> session.goBack()
-            else -> tvDialog(this)
-                .setTitle(getString(R.string.app_name))
-                .setMessage("Exit ${getString(R.string.app_name)}?")
-                .setPositiveButton("Exit") { _, _ -> finish() }
-                .setNegativeButton("Stay", null)
-                .show()
+            Prefs.homePage == null -> showHome()
+            else -> confirmExit()
         }
+    }
+
+    private fun confirmExit() {
+        tvDialog(this)
+            .setTitle(getString(R.string.app_name))
+            .setMessage("Exit ${getString(R.string.app_name)}?")
+            .setPositiveButton("Exit") { _, _ -> finish() }
+            .setNegativeButton("Stay", null)
+            .show()
     }
 
     /** The GeckoView the cursor acts on: the extension popup when open, else the page. */
@@ -280,7 +393,8 @@ class MainActivity : Activity() {
         if (topBar.visibility == View.VISIBLE) return
         cursor.visibility = View.VISIBLE
         handler.removeCallbacks(hideCursor)
-        handler.postDelayed(hideCursor, CURSOR_IDLE_MS)
+        val hideAfter = Prefs.cursorHideSeconds
+        if (hideAfter > 0) handler.postDelayed(hideCursor, hideAfter * 1000L)
     }
 
     /** Moves the cursor every frame while D-pad keys are held, speeding up the longer they are. */
@@ -304,7 +418,7 @@ class MainActivity : Activity() {
                 running = true
                 startNanos = System.nanoTime()
                 // Immediate small step so a quick tap moves precisely.
-                step(BASE_SPEED_DP * density * 2)
+                step(BASE_SPEED_DP * density * 2 * Prefs.cursorSpeed.factor)
                 Choreographer.getInstance().postFrameCallback(this)
             }
         }
@@ -328,7 +442,7 @@ class MainActivity : Activity() {
             // Short hold delay before continuous motion, then linear acceleration up to a cap.
             if (held > HOLD_DELAY_S) {
                 val speed = min(MAX_SPEED_DP, BASE_SPEED_DP + ACCEL_DP * (held - HOLD_DELAY_S))
-                step(speed * density)
+                step(speed * density * Prefs.cursorSpeed.factor)
             }
             Choreographer.getInstance().postFrameCallback(this)
         }
@@ -346,6 +460,7 @@ class MainActivity : Activity() {
         topBar.visibility = View.VISIBLE
         cursor.visibility = View.INVISIBLE
         urlField.setText(currentUrl)
+        updateSaveButton()
         urlField.requestFocus()
     }
 
@@ -358,15 +473,7 @@ class MainActivity : Activity() {
     }
 
     private fun navigate(text: String) {
-        val input = text.trim()
-        if (input.isEmpty()) return
-        val url = when {
-            input.contains("://") || input.startsWith("about:") -> input
-            !input.contains(' ') && input.contains('.') -> "https://$input"
-            else -> SEARCH + URLEncoder.encode(input, "UTF-8")
-        }
-        session.loadUri(url)
-        hideBar()
+        Prefs.toUrl(text)?.let(::open)
     }
 
     private fun rebuildActions() {
@@ -437,8 +544,11 @@ class MainActivity : Activity() {
             hasUserGesture: Boolean,
         ) {
             url?.let {
+                if (it != currentUrl) currentTitle = null
                 currentUrl = it
                 if (!urlField.hasFocus()) urlField.setText(it)
+                Prefs.addRecent(currentTitle, it)
+                updateSaveButton()
             }
         }
 
@@ -458,7 +568,13 @@ class MainActivity : Activity() {
     }
 
     private val content = object : GeckoSession.ContentDelegate {
+        override fun onTitleChange(session: GeckoSession, title: String?) {
+            currentTitle = title
+            if (title != null) Prefs.retitleRecent(currentUrl, title)
+        }
+
         override fun onFullScreen(session: GeckoSession, fullScreen: Boolean) {
+            fullscreen = fullScreen
             val h = if (fullScreen) 0 else resources.getDimensionPixelSize(R.dimen.overscan_h)
             val v = if (fullScreen) 0 else resources.getDimensionPixelSize(R.dimen.overscan_v)
             root.setPadding(h, v, h, v)
@@ -480,17 +596,19 @@ class MainActivity : Activity() {
         geckoView.releaseSession()
         session.close()
         openSession()
-        session.loadUri(currentUrl)
+        if (currentUrl.isNotEmpty()) session.loadUri(currentUrl)
     }
 
     companion object {
-        const val HOME = "https://www.google.com"
-        const val SEARCH = "https://www.google.com/search?q="
+        private const val USER_AGENT_DESKTOP = GeckoSessionSettings.USER_AGENT_MODE_DESKTOP
+        private const val USER_AGENT_MOBILE = GeckoSessionSettings.USER_AGENT_MODE_MOBILE
+        private const val VIEWPORT_DESKTOP = GeckoSessionSettings.VIEWPORT_MODE_DESKTOP
+        private const val VIEWPORT_MOBILE = GeckoSessionSettings.VIEWPORT_MODE_MOBILE
+        private const val THUMB_W = 480
         private const val BASE_SPEED_DP = 3f
         private const val ACCEL_DP = 18f
         private const val MAX_SPEED_DP = 24f
         private const val HOLD_DELAY_S = 0.12f
         private const val EDGE_SCROLL_FACTOR = 2.5f
-        private const val CURSOR_IDLE_MS = 6000L
     }
 }

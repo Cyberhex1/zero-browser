@@ -7,6 +7,9 @@
     <string name="reload">Reload</string>
     <string name="home">Home</string>
     <string name="addons">Add-ons</string>
+    <string name="settings">Settings</string>
+    <string name="save_to_home">★ Save to Home</string>
+    <string name="remove_from_home">★ Remove from Home</string>
     <string name="extensions">Extensions:</string>
     <string name="url_hint">Search or type a web address</string>
     <string name="popup_hint">Extension panel. Press Back to close.</string>

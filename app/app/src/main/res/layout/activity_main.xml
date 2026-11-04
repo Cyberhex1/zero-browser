@@ -64,6 +64,16 @@
         </LinearLayout>
     </FrameLayout>
 
+    <!-- Zero Home; content is built by HomeScreen. -->
+    <ScrollView
+        android:id="@+id/home_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#121316"
+        android:clipChildren="false"
+        android:fillViewport="true"
+        android:visibility="gone" />
+
     <LinearLayout
         android:id="@+id/top_bar"
         android:layout_width="match_parent"
@@ -73,6 +83,25 @@
         android:orientation="vertical"
         android:padding="12dp"
         android:visibility="gone">
+
+        <EditText
+            android:id="@+id/url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="6dp"
+            android:background="@drawable/focus_bg"
+            android:hint="@string/url_hint"
+            android:imeOptions="actionGo"
+            android:importantForAutofill="no"
+            android:inputType="textUri"
+            android:minHeight="56dp"
+            android:paddingLeft="18dp"
+            android:paddingRight="18dp"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#99FFFFFF"
+            android:textSize="20sp" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -100,30 +129,20 @@
                 style="@style/TvButton"
                 android:text="@string/home" />
 
-            <EditText
-                android:id="@+id/url"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_margin="6dp"
-                android:layout_weight="1"
-                android:background="@drawable/focus_bg"
-                android:hint="@string/url_hint"
-                android:imeOptions="actionGo"
-                android:importantForAutofill="no"
-                android:inputType="textUri"
-                android:minHeight="56dp"
-                android:paddingLeft="18dp"
-                android:paddingRight="18dp"
-                android:selectAllOnFocus="true"
-                android:singleLine="true"
-                android:textColor="#FFFFFF"
-                android:textColorHint="#99FFFFFF"
-                android:textSize="20sp" />
+            <Button
+                android:id="@+id/btn_save"
+                style="@style/TvButton"
+                android:text="@string/save_to_home" />
 
             <Button
                 android:id="@+id/btn_addons"
                 style="@style/TvButton"
                 android:text="@string/addons" />
+
+            <Button
+                android:id="@+id/btn_settings"
+                style="@style/TvButton"
+                android:text="@string/settings" />
         </LinearLayout>
 
         <LinearLayout
