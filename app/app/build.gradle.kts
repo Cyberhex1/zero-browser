@@ -7,8 +7,17 @@ plugins {
 
 // Package id and version; the display name is app_name in res/values/strings.xml.
 val appId = "app.zerobrowser"
-val appVersion = "0.1.1"
-val geckoviewVersion = "159.0.20261022150525"
+val appVersion = "0.1.2"
+// Bump once per release. Modern builds get +1000 so they always outrank legacy ones,
+// letting a device that later moves to a newer Fire OS upgrade from legacy to modern.
+val buildNumber = 3
+
+// "modern": current GeckoView, Android 8+ (Fire OS 7/8).
+// "legacy": GeckoView 144, the last release supporting Android 5–7 (Fire OS 5/6).
+// Mozilla raised GeckoView's minSdk to 26 in 145 and publishes no ESR GeckoView,
+// so the legacy engine gets no further security updates.
+val geckoviewModern = "159.0.20261102144711"
+val geckoviewLegacy = "144.0.20251027123126"
 
 // Release signing comes from ../../keystore.properties (gitignored), next to keystore/release.jks.
 val keystoreProps = Properties().apply {
@@ -22,10 +31,23 @@ android {
 
     defaultConfig {
         applicationId = appId
-        minSdk = 28
         targetSdk = 36
-        versionCode = 2
         versionName = appVersion
+    }
+
+    flavorDimensions += "engine"
+    productFlavors {
+        create("modern") {
+            dimension = "engine"
+            minSdk = 26
+            versionCode = 1000 + buildNumber
+        }
+        create("legacy") {
+            dimension = "engine"
+            minSdk = 21
+            versionCode = buildNumber
+            versionNameSuffix = "-legacy"
+        }
     }
 
     // One APK per ABI: Fire TV sticks may run a 32-bit userland on 64-bit CPUs.
@@ -70,18 +92,21 @@ android {
 }
 
 dependencies {
-    implementation("org.mozilla.geckoview:geckoview:$geckoviewVersion")
+    "modernImplementation"("org.mozilla.geckoview:geckoview:$geckoviewModern")
+    "legacyImplementation"("org.mozilla.geckoview:geckoview:$geckoviewLegacy")
 }
 
-// Copies release APKs to ../dist as ZeroBrowser-v<version>-<abi>.apk for GitHub releases.
+// Copies release APKs to ../dist for GitHub releases:
+// ZeroBrowser-v<version>-<abi>.apk (modern) and ZeroBrowser-legacy-v<version>-armeabi-v7a.apk.
 tasks.register<Copy>("dist") {
-    dependsOn("assembleRelease")
-    from(layout.buildDirectory.dir("outputs/apk/release")) {
+    dependsOn("assembleModernRelease", "assembleLegacyRelease")
+    from(layout.buildDirectory.dir("outputs/apk/modern/release")) {
         include("*-release.apk")
+        rename(Regex("app-modern-(.+)-release\\.apk").toPattern(), "ZeroBrowser-v$appVersion-$1.apk")
+    }
+    from(layout.buildDirectory.dir("outputs/apk/legacy/release")) {
+        include("*-armeabi-v7a-release.apk")
+        rename(Regex("app-legacy-(.+)-release\\.apk").toPattern(), "ZeroBrowser-legacy-v$appVersion-$1.apk")
     }
     into(rootProject.file("../dist"))
-    rename { name ->
-        val abi = Regex("app-(.+)-release\\.apk").find(name)?.groupValues?.get(1) ?: name
-        "ZeroBrowser-v$appVersion-$abi.apk"
-    }
 }

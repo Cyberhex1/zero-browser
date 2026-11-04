@@ -350,7 +350,7 @@ class MainActivity : Activity() {
 
     private fun hideBar() {
         if (topBar.visibility != View.VISIBLE) return
-        getSystemService(InputMethodManager::class.java)?.hideSoftInputFromWindow(urlField.windowToken, 0)
+        (getSystemService(INPUT_METHOD_SERVICE) as? InputMethodManager)?.hideSoftInputFromWindow(urlField.windowToken, 0)
         topBar.visibility = View.GONE
         geckoView.requestFocus()
         bumpCursor()

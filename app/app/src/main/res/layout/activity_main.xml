@@ -5,8 +5,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000"
-    android:paddingHorizontal="@dimen/overscan_h"
-    android:paddingVertical="@dimen/overscan_v">
+    android:paddingLeft="@dimen/overscan_h"
+    android:paddingRight="@dimen/overscan_h"
+    android:paddingTop="@dimen/overscan_v"
+    android:paddingBottom="@dimen/overscan_v">
 
     <org.mozilla.geckoview.GeckoView
         android:id="@+id/gecko"
@@ -30,8 +32,10 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#B3000000"
-        android:paddingHorizontal="140dp"
-        android:paddingVertical="24dp"
+        android:paddingLeft="140dp"
+        android:paddingRight="140dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="24dp"
         android:visibility="gone">
 
         <LinearLayout
@@ -108,7 +112,8 @@
                 android:importantForAutofill="no"
                 android:inputType="textUri"
                 android:minHeight="56dp"
-                android:paddingHorizontal="18dp"
+                android:paddingLeft="18dp"
+                android:paddingRight="18dp"
                 android:selectAllOnFocus="true"
                 android:singleLine="true"
                 android:textColor="#FFFFFF"
@@ -132,7 +137,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="8dp"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
                 android:text="@string/extensions"
                 android:textColor="#CCFFFFFF"
                 android:textSize="18sp" />

@@ -40,4 +40,4 @@ fun Context.tvText(text: CharSequence, size: Float = 20f, bold: Boolean = false)
     }
 
 fun tvDialog(context: Context): AlertDialog.Builder =
-    AlertDialog.Builder(context, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+    AlertDialog.Builder(context, android.R.style.Theme_Material_Dialog_Alert)
