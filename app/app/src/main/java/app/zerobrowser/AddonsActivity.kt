@@ -90,14 +90,24 @@ class AddonsActivity : Activity() {
         setPadding(dp(6), dp(24), dp(6), dp(8))
     }
 
+    /** One add-on: its name (first line of [text]) in bold, the rest muted below, buttons on the right. */
     private fun row(text: CharSequence, vararg buttons: Button): View =
         LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            setPadding(dp(6), dp(4), dp(6), dp(4))
-            addView(
-                tvText(text, 18f),
-                LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f),
-            )
+            gravity = android.view.Gravity.CENTER_VERTICAL
+            // Without this, the multi-line text is aligned to the button's baseline and gets clipped.
+            isBaselineAligned = false
+            setPadding(dp(6), dp(10), dp(6), dp(10))
+            val lines = text.toString().split("\n", limit = 2)
+            val info = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+            info.addView(tvText(lines[0], 20f, bold = true))
+            lines.getOrNull(1)?.takeIf { it.isNotBlank() }?.let {
+                info.addView(tvText(it, 16f).apply {
+                    setTextColor(Arcade.TEXT_MUTED)
+                    setPadding(0, dp(2), dp(16), 0)
+                })
+            }
+            addView(info, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
             buttons.forEach { addView(it) }
         }
 
@@ -207,7 +217,9 @@ class AddonsActivity : Activity() {
         val have = installed.map { it.id }.toSet()
         val fmt = NumberFormat.getIntegerInstance()
         for (addon in popular) {
-            val summary = addon.summary.let { if (it.length > 140) it.take(137) + "…" else it }
+            // AMO summaries can contain paragraph breaks; show them as one paragraph.
+            val summary = addon.summary.replace(Regex("\\s+"), " ").trim()
+                .let { if (it.length > 140) it.take(137) + "…" else it }
             val users = if (addon.users > 0) "\n${fmt.format(addon.users)} users" else ""
             val text = "${addon.name}\n$summary$users"
             val button = if (addon.guid in have) {

@@ -1,6 +1,5 @@
 package app.zerobrowser
 
-import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Typeface
 import android.view.Gravity
@@ -86,4 +85,4 @@ fun Context.arcadeLabel(text: String, color: Int): TextView = tvText(text.upperc
     setTextColor(color)
 }
 
-fun tvDialog(context: Context): AlertDialog.Builder = AlertDialog.Builder(context, R.style.Theme_Arcade_Dialog)
+fun tvDialog(context: Context): ArcadeDialog = ArcadeDialog(context)

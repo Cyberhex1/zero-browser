@@ -61,8 +61,6 @@ object InstallPrompts : WebExtensionController.PromptDelegate {
                 .setNegativeButton("Cancel") { _, _ -> finish(false) }
                 .setOnDismissListener { finish(false) }
                 .show()
-                .getButton(android.app.AlertDialog.BUTTON_POSITIVE)
-                ?.requestFocus()
         }
     }
 
