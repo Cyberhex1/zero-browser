@@ -6,7 +6,7 @@ A web browser for Amazon Fire TV (and other Android TV devices) that you drive w
 
 It is built on Mozilla's [GeckoView](https://geckoview.dev) (the Firefox engine), so it installs Firefox for Android add-ons from [addons.mozilla.org](https://addons.mozilla.org/android/).
 
-> Early prototype (v0.3.1). Formerly "TV Browser": if you installed v0.1.0, uninstall it first, since Zero Browser is a separate app.
+> Early prototype (v0.3.2). Formerly "TV Browser": if you installed v0.1.0, uninstall it first, since Zero Browser is a separate app.
 
 ## Which APK do I need?
 
@@ -34,7 +34,7 @@ If the installer says **"There was a problem parsing the package"**, your Fire O
 5. When the download finishes, choose **Install**. You can delete the APK file afterwards.
 6. Zero Browser now appears under **Your Apps & Channels**.
 
-To update later, repeat steps 4–5. The new version installs over the old one and keeps your add-ons.
+**Updating:** from v0.3.2 on, open **Settings → About → Check for updates**. Zero Browser downloads the newest release and installs it over itself, keeping your saved pages, settings and add-ons. (The first time, Android may ask you to allow Zero Browser to install apps.) Repeating steps 4–5 with Downloader also works.
 
 ## Features
 

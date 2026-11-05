@@ -272,6 +272,9 @@ class SettingsActivity : Activity() {
     private fun about() {
         val version = packageManager.getPackageInfo(packageName, 0).versionName
         heading(getString(R.string.app_name), "Version $version")
+
+        heading("Updates", "Installs the newest release over this one. Your saved pages, settings and add-ons stay.")
+        buttons(tvButton("Check for updates") { }.also { b -> b.setOnClickListener { checkForUpdates(b) } })
         heading("Browser engine", "Mozilla GeckoView ${getString(R.string.engine_version)}")
         if (getString(R.string.engine_version).startsWith("144.")) {
             pane.addView(tvText(
@@ -288,6 +291,60 @@ class SettingsActivity : Activity() {
             finish()
         })
         heading("License", "Mozilla Public License 2.0")
+    }
+
+    private fun checkForUpdates(button: Button) {
+        val label = button.text
+        button.isEnabled = false
+        button.text = "Checking…"
+        fun reset() = runOnUiThread {
+            button.isEnabled = true
+            button.text = label
+        }
+        Thread {
+            try {
+                val installed = Updater.installedVersion(this)
+                val latest = Updater.fetchLatest(this)
+                runOnUiThread {
+                    if (latest == null || !Updater.isNewer(latest.version, installed)) {
+                        reset()
+                        toast("You have the latest version ($installed)")
+                    } else {
+                        tvDialog(this)
+                            .setTitle("Update to ${latest.version}?")
+                            .setMessage(
+                                "Zero Browser $installed is installed. Version ${latest.version} " +
+                                    "(${latest.sizeBytes / (1024 * 1024)} MB) will download and install over it.",
+                            )
+                            .setPositiveButton("Update") { _, _ -> downloadUpdate(button, latest, ::reset) }
+                            .setNegativeButton("Not now") { _, _ -> reset() }
+                            .setOnCancelListener { reset() }
+                            .show()
+                    }
+                }
+            } catch (e: Exception) {
+                reset()
+                runOnUiThread { toast("Couldn't check for updates (${e.message})") }
+            }
+        }.start()
+    }
+
+    private fun downloadUpdate(button: Button, release: Updater.Release, reset: () -> Unit) {
+        button.text = "Downloading 0%"
+        Thread {
+            try {
+                val apk = Updater.download(this, release) { pct -> runOnUiThread { button.text = "Downloading $pct%" } }
+                runOnUiThread {
+                    reset()
+                    if (!Updater.install(this, apk)) {
+                        toast("Allow Zero Browser to install updates, then press Check for updates again")
+                    }
+                }
+            } catch (e: Exception) {
+                reset()
+                runOnUiThread { toast("Download failed (${e.message})") }
+            }
+        }.start()
     }
 
     companion object {

@@ -7,10 +7,10 @@ plugins {
 
 // Package id and version; the display name is app_name in res/values/strings.xml.
 val appId = "app.zerobrowser"
-val appVersion = "0.3.1"
+val appVersion = "0.3.2"
 // Bump once per release. Modern builds get +1000 so they always outrank legacy ones,
 // letting a device that later moves to a newer Fire OS upgrade from legacy to modern.
-val buildNumber = 8
+val buildNumber = 9
 
 // "modern": current GeckoView, Android 8+ (Fire OS 7/8).
 // "legacy": GeckoView 144, the last release supporting Android 5–7 (Fire OS 5/6).
@@ -46,6 +46,8 @@ android {
             minSdk = 26
             versionCode = 1000 + buildNumber
             resValue("string", "engine_version", geckoviewModern)
+            // Release file name prefix the in-app updater downloads, e.g. ZeroBrowser-armeabi-v7a.apk.
+            resValue("string", "update_asset_prefix", "ZeroBrowser-")
         }
         create("legacy") {
             dimension = "engine"
@@ -53,6 +55,7 @@ android {
             versionCode = buildNumber
             versionNameSuffix = "-legacy"
             resValue("string", "engine_version", geckoviewLegacy)
+            resValue("string", "update_asset_prefix", "ZeroBrowser-legacy-")
         }
     }
 
@@ -100,6 +103,8 @@ android {
 dependencies {
     "modernImplementation"("org.mozilla.geckoview:geckoview:$geckoviewModern")
     "legacyImplementation"("org.mozilla.geckoview:geckoview:$geckoviewLegacy")
+    // FileProvider, to hand downloaded updates to Android's installer.
+    implementation("androidx.core:core:1.13.1")
 }
 
 // Copies release APKs to ../dist for GitHub releases:
