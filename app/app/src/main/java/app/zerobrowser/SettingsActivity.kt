@@ -20,13 +20,20 @@ import org.mozilla.geckoview.StorageController
 class SettingsActivity : Activity() {
 
     private enum class Pane(val label: String) {
-        GENERAL("General"), PRIVACY("Privacy"), ADDONS("Add-ons"), CONTROLS("Controls"), ABOUT("About")
+        GENERAL("General"), PRIVACY("Privacy"), ADDONS("Add-ons"), UPDATES("Updates"), CONTROLS("Controls"), ABOUT("About")
     }
 
     private lateinit var pane: LinearLayout
     private val menuButtons = mutableMapOf<Pane, Button>()
     private lateinit var paneScroll: ScrollView
     private var current: Pane? = null
+
+    // Updates pane state, kept while Settings is open.
+    private var latest: Updater.Release? = null
+    private var updateStatus: String? = null
+    private var downloadPct: Int? = null
+    private var progressBar: android.widget.ProgressBar? = null
+    private var progressText: android.widget.TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,7 +54,7 @@ class SettingsActivity : Activity() {
         Pane.entries.forEach { p ->
             val b = tvButton(p.label) { focusPane() }
             b.layoutParams = LinearLayout.LayoutParams(dp(240), LinearLayout.LayoutParams.WRAP_CONTENT)
-                .apply { setMargins(dp(6), dp(6), dp(6), dp(6)) }
+                .apply { setMargins(dp(6), dp(3), dp(6), dp(3)) }
             b.gravity = Gravity.CENTER_VERTICAL or Gravity.START
             b.setOnFocusChangeListener { _, focused -> if (focused && current != p) show(p) }
             menuButtons[p] = b
@@ -55,9 +62,9 @@ class SettingsActivity : Activity() {
         }
         menu.addView(tvButton("Done") { finish() }.apply {
             layoutParams = LinearLayout.LayoutParams(dp(240), LinearLayout.LayoutParams.WRAP_CONTENT)
-                .apply { setMargins(dp(6), dp(24), dp(6), dp(6)) }
+                .apply { setMargins(dp(6), dp(16), dp(6), dp(6)) }
         })
-        root.addView(menu)
+        root.addView(ScrollView(this).apply { addView(menu) })
 
         pane = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -100,6 +107,7 @@ class SettingsActivity : Activity() {
             Pane.GENERAL -> general()
             Pane.PRIVACY -> privacy()
             Pane.ADDONS -> addons()
+            Pane.UPDATES -> updates()
             Pane.CONTROLS -> controls()
             Pane.ABOUT -> about()
         }
@@ -269,12 +277,133 @@ class SettingsActivity : Activity() {
         }
     }
 
+    // ---- Updates ----
+
+    private fun updates() {
+        val installed = Updater.installedVersion(this)
+        val rel = latest
+        val newer = rel != null && Updater.isNewer(rel.version, installed)
+        heading("Installed version", "Zero Browser $installed")
+
+        heading("Status", updateStatus ?: "Not checked yet")
+        if (newer && rel != null && rel.notes.isNotBlank()) {
+            pane.addView(tvText(rel.notes, 17f).apply {
+                setLineSpacing(0f, 1.1f)
+                setPadding(dp(6), dp(10), dp(6), dp(4))
+            })
+        }
+        val row = mutableListOf(tvButton("Check now") { checkNow() }.apply { tag = "upd:check" })
+        if (newer && rel != null && rel.apkUrl.isNotEmpty() && downloadPct == null) {
+            row.add(0, tvButton("Update now") { startUpdate(rel) }.apply {
+                tag = "upd:now"
+                setTextColor(Arcade.CYAN)
+            })
+        }
+        buttons(*row.toTypedArray())
+
+        downloadPct?.let { pct ->
+            progressBar = android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
+                max = 100
+                progress = pct
+                progressTintList = android.content.res.ColorStateList.valueOf(Arcade.CYAN)
+            }
+            pane.addView(
+                progressBar,
+                LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(12))
+                    .apply { setMargins(dp(6), dp(12), dp(6), dp(4)) },
+            )
+            progressText = tvText("Downloading $pct%", 17f).apply { setPadding(dp(6), 0, 0, 0) }
+            pane.addView(progressText)
+        }
+
+        heading("Automatic check", "Once a day when Zero Browser starts. Zero Home shows a notice when an update is ready.")
+        choice("autoupd", listOf(true, false), { if (it) "On" else "Off" }, Prefs.autoUpdateCheck) {
+            Prefs.autoUpdateCheck = it
+        }
+
+        heading("If an update won't install", UNKNOWN_SOURCES_HELP)
+
+        // Check automatically the first time the pane opens.
+        if (updateStatus == null) checkNow()
+    }
+
+    private fun checkNow() {
+        updateStatus = "Checking…"
+        if (current == Pane.UPDATES) show(Pane.UPDATES, "upd:check")
+        Thread {
+            val status = try {
+                val installed = Updater.installedVersion(this)
+                val rel = Updater.fetchLatest(this)
+                latest = rel
+                Prefs.lastUpdateCheck = System.currentTimeMillis()
+                when {
+                    rel == null || !Updater.isNewer(rel.version, installed) -> {
+                        Prefs.availableUpdate = null
+                        "Up to date"
+                    }
+                    rel.apkUrl.isEmpty() -> "Version ${rel.version} is out, but has no file for this device yet"
+                    else -> {
+                        Prefs.availableUpdate = rel.version
+                        "Version ${rel.version} is available (${rel.sizeBytes / (1024 * 1024)} MB)"
+                    }
+                }
+            } catch (e: Exception) {
+                "Couldn't check (${e.message ?: "no connection"})"
+            }
+            runOnUiThread {
+                updateStatus = status
+                val focus = if (latest?.apkUrl.isNullOrEmpty() || status == "Up to date") "upd:check" else "upd:now"
+                if (current == Pane.UPDATES) show(Pane.UPDATES, focus)
+            }
+        }.start()
+    }
+
+    private fun startUpdate(rel: Updater.Release) {
+        if (!Updater.canInstall(this)) {
+            if (android.os.Build.VERSION.SDK_INT >= 26) {
+                Updater.openInstallPermission(this)
+                toast("Allow Zero Browser to install apps, then press Update now again")
+            } else {
+                tvDialog(this)
+                    .setTitle("Allow app installs first")
+                    .setMessage(UNKNOWN_SOURCES_HELP)
+                    .setPositiveButton("OK", null)
+                    .show()
+            }
+            return
+        }
+        downloadPct = 0
+        show(Pane.UPDATES, "upd:check")
+        Thread {
+            try {
+                val apk = Updater.download(this, rel) { pct ->
+                    runOnUiThread {
+                        downloadPct = pct
+                        progressBar?.progress = pct
+                        progressText?.text = "Downloading $pct%"
+                    }
+                }
+                runOnUiThread {
+                    downloadPct = null
+                    updateStatus = "Installing version ${rel.version}…"
+                    show(Pane.UPDATES, "upd:check")
+                    Updater.install(this, apk)
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    downloadPct = null
+                    updateStatus = "Download failed (${e.message ?: "no connection"})"
+                    show(Pane.UPDATES, "upd:check")
+                }
+            }
+        }.start()
+    }
+
+
     private fun about() {
         val version = packageManager.getPackageInfo(packageName, 0).versionName
         heading(getString(R.string.app_name), "Version $version")
 
-        heading("Updates", "Installs the newest release over this one. Your saved pages, settings and add-ons stay.")
-        buttons(tvButton("Check for updates") { }.also { b -> b.setOnClickListener { checkForUpdates(b) } })
         heading("Browser engine", "Mozilla GeckoView ${getString(R.string.engine_version)}")
         if (getString(R.string.engine_version).startsWith("144.")) {
             pane.addView(tvText(
@@ -293,63 +422,15 @@ class SettingsActivity : Activity() {
         heading("License", "Mozilla Public License 2.0")
     }
 
-    private fun checkForUpdates(button: Button) {
-        val label = button.text
-        button.isEnabled = false
-        button.text = "Checking…"
-        fun reset() = runOnUiThread {
-            button.isEnabled = true
-            button.text = label
-        }
-        Thread {
-            try {
-                val installed = Updater.installedVersion(this)
-                val latest = Updater.fetchLatest(this)
-                runOnUiThread {
-                    if (latest == null || !Updater.isNewer(latest.version, installed)) {
-                        reset()
-                        toast("You have the latest version ($installed)")
-                    } else {
-                        tvDialog(this)
-                            .setTitle("Update to ${latest.version}?")
-                            .setMessage(
-                                "Zero Browser $installed is installed. Version ${latest.version} " +
-                                    "(${latest.sizeBytes / (1024 * 1024)} MB) will download and install over it.",
-                            )
-                            .setPositiveButton("Update") { _, _ -> downloadUpdate(button, latest, ::reset) }
-                            .setNegativeButton("Not now") { _, _ -> reset() }
-                            .setOnCancelListener { reset() }
-                            .show()
-                    }
-                }
-            } catch (e: Exception) {
-                reset()
-                runOnUiThread { toast("Couldn't check for updates (${e.message})") }
-            }
-        }.start()
-    }
-
-    private fun downloadUpdate(button: Button, release: Updater.Release, reset: () -> Unit) {
-        button.text = "Downloading 0%"
-        Thread {
-            try {
-                val apk = Updater.download(this, release) { pct -> runOnUiThread { button.text = "Downloading $pct%" } }
-                runOnUiThread {
-                    reset()
-                    if (!Updater.install(this, apk)) {
-                        toast("Allow Zero Browser to install updates, then press Check for updates again")
-                    }
-                }
-            } catch (e: Exception) {
-                reset()
-                runOnUiThread { toast("Download failed (${e.message})") }
-            }
-        }.start()
-    }
-
     companion object {
         const val EXTRA_PANE = "pane"
         private const val REPO_URL = "https://github.com/Cyberhex1/zero-browser"
+
+        const val UNKNOWN_SOURCES_HELP =
+            "Fire OS 7 or 8: Settings → My Fire TV → Developer options → Install unknown apps → " +
+                "Zero Browser → On.\nFire OS 5 or 6: Settings → My Fire TV → Developer options → " +
+                "Apps from Unknown Sources → On.\nNo Developer options? Open Settings → My Fire TV → About " +
+                "and press Select on your device name 7 times."
 
         val CONTROLS = listOf(
             "D-pad" to "Moves the cursor. Tap for small steps; hold to move faster the longer you hold.",

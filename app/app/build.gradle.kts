@@ -7,10 +7,10 @@ plugins {
 
 // Package id and version; the display name is app_name in res/values/strings.xml.
 val appId = "app.zerobrowser"
-val appVersion = "0.3.2"
+val appVersion = "0.4.0"
 // Bump once per release. Modern builds get +1000 so they always outrank legacy ones,
 // letting a device that later moves to a newer Fire OS upgrade from legacy to modern.
-val buildNumber = 9
+val buildNumber = 10
 
 // "modern": current GeckoView, Android 8+ (Fire OS 7/8).
 // "legacy": GeckoView 144, the last release supporting Android 5–7 (Fire OS 5/6).

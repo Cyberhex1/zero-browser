@@ -32,11 +32,13 @@ class HomeScreen(
     private val onOpen: (url: String) -> Unit,
     private val onSettings: () -> Unit,
     private val onAddons: () -> Unit,
+    private val onUpdate: () -> Unit,
 ) {
     private enum class Kind { SAVED, RECENT }
     private data class TileRef(val tile: Tile, val kind: Kind)
 
     private val search: EditText
+    private val updateNotice: android.widget.Button
     private val savedGrid: GridLayout
     private val recentLabel: TextView
     private val recentList: LinearLayout
@@ -65,6 +67,13 @@ class HomeScreen(
         header.addView(a.tvButton("Add-ons") { onAddons() })
         header.addView(a.tvButton("Settings") { onSettings() })
         content.addView(header)
+
+        // Shown when a check found a newer release; opens Settings → Updates.
+        updateNotice = a.tvButton("") { onUpdate() }.apply {
+            setTextColor(Arcade.PINK)
+            visibility = View.GONE
+        }
+        content.addView(updateNotice)
 
         // Terminal-style search box: a pink ">" prompt; the box lights up while the field has focus.
         val searchBox = LinearLayout(a).apply {
@@ -134,6 +143,9 @@ class HomeScreen(
 
     /** Rebuilds both rows from storage; focuses [focusId] if given, else the first tile. */
     fun refresh(focusId: String? = null) {
+        val pending = Updater.pendingUpdate(activity)
+        updateNotice.visibility = if (pending == null) View.GONE else View.VISIBLE
+        updateNotice.text = "▲  Update available: version $pending  ·  Install"
         fill(savedGrid, Prefs.tiles, Kind.SAVED)
         savedGrid.addView(addTile())
         val recents = Prefs.recents

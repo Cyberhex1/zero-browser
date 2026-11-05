@@ -80,7 +80,17 @@ class MainActivity : Activity() {
             onOpen = { url -> open(url) },
             onSettings = { openSettings() },
             onAddons = { startActivity(Intent(this, AddonsActivity::class.java)) },
+            onUpdate = {
+                startActivity(
+                    Intent(this, SettingsActivity::class.java).putExtra(SettingsActivity.EXTRA_PANE, "UPDATES"),
+                )
+            },
         )
+        // A finished update leaves its downloaded file behind; then check for a newer one (daily).
+        Updater.cleanup(this)
+        Updater.backgroundCheck(this) {
+            runOnUiThread { if (homeLayer.visibility == View.VISIBLE) home.refresh() }
+        }
 
         openSession()
         val start = intent?.dataString ?: Prefs.homePage

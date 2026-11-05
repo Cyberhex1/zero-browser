@@ -72,6 +72,20 @@ object Prefs {
         get() = CursorSpeed.entries.firstOrNull { it.name == prefs.getString("cursor", null) } ?: CursorSpeed.NORMAL
         set(value) = prefs.edit().putString("cursor", value.name).apply()
 
+    /** Check GitHub for a newer release once a day on launch. */
+    var autoUpdateCheck: Boolean
+        get() = prefs.getBoolean("autoUpdate", true)
+        set(value) = prefs.edit().putBoolean("autoUpdate", value).apply()
+
+    var lastUpdateCheck: Long
+        get() = prefs.getLong("lastUpdateCheck", 0)
+        set(value) = prefs.edit().putLong("lastUpdateCheck", value).apply()
+
+    /** Newest version seen by a check (shown on Zero Home while newer than the installed one). */
+    var availableUpdate: String?
+        get() = prefs.getString("availableUpdate", null)
+        set(value) = prefs.edit().putString("availableUpdate", value).apply()
+
     var adBlockOffered: Boolean
         get() = prefs.getBoolean("adBlockOffered", false)
         set(value) = prefs.edit().putBoolean("adBlockOffered", value).apply()

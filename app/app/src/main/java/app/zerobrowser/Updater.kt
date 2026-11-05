@@ -20,7 +20,8 @@ import java.net.URL
 object Updater {
     private const val LATEST = "https://api.github.com/repos/Cyberhex1/zero-browser/releases/latest"
 
-    data class Release(val version: String, val apkUrl: String, val sizeBytes: Long)
+    /** [apkUrl] is empty when the release has no file for this build. */
+    data class Release(val version: String, val apkUrl: String, val sizeBytes: Long, val notes: String)
 
     /** "0.3.2" for both "0.3.2" and "0.3.2-legacy". */
     fun installedVersion(context: Context): String =
@@ -51,15 +52,66 @@ object Updater {
         conn.setRequestProperty("Accept", "application/vnd.github+json")
         val json = JSONObject(conn.inputStream.bufferedReader().use { it.readText() })
         val version = json.optString("tag_name").removePrefix("v")
-        val assets = json.optJSONArray("assets") ?: return null
+        if (version.isEmpty()) return null
+        val notes = plainNotes(json.optString("body"))
+        val assets = json.optJSONArray("assets")
         val want = assetName(context)
-        for (i in 0 until assets.length()) {
-            val a = assets.getJSONObject(i)
+        for (i in 0 until (assets?.length() ?: 0)) {
+            val a = assets!!.getJSONObject(i)
             if (a.optString("name") == want) {
-                return Release(version, a.optString("browser_download_url"), a.optLong("size"))
+                return Release(version, a.optString("browser_download_url"), a.optLong("size"), notes)
             }
         }
-        return null
+        return Release(version, "", 0, notes)
+    }
+
+    /** Release notes as plain text for a TV dialog: no tables, headings marks or link syntax. */
+    private fun plainNotes(markdown: String): String =
+        markdown.lines()
+            .filterNot { it.trimStart().startsWith("|") }
+            .joinToString("\n") { line ->
+                line.replace(Regex("^#+\\s*"), "")
+                    .replace(Regex("\\[([^]]+)]\\([^)]*\\)"), "$1")
+                    .replace("**", "").replace("`", "")
+                    .replace(Regex("^\\s*[-*]\\s+"), "• ")
+            }
+            .replace(Regex("\n{3,}"), "\n\n")
+            .trim()
+            .let { if (it.length > 700) it.take(697) + "…" else it }
+
+    /** Quiet check at most once a day (when enabled); remembers a newer version for Zero Home. */
+    fun backgroundCheck(context: Context, onResult: () -> Unit) {
+        val now = System.currentTimeMillis()
+        if (!Prefs.autoUpdateCheck || now - Prefs.lastUpdateCheck < 24L * 60 * 60 * 1000) return
+        Prefs.lastUpdateCheck = now
+        Thread {
+            try {
+                val latest = fetchLatest(context)
+                Prefs.availableUpdate = latest?.version
+                    ?.takeIf { latest.apkUrl.isNotEmpty() && isNewer(it, installedVersion(context)) }
+                onResult()
+            } catch (e: Exception) {
+                // Offline or rate-limited: try again tomorrow.
+            }
+        }.start()
+    }
+
+    /** A newer version found by a check and not yet installed, else null. */
+    fun pendingUpdate(context: Context): String? =
+        Prefs.availableUpdate?.takeIf { isNewer(it, installedVersion(context)) }
+
+    /** True when Fire OS / Android lets this app install updates. */
+    fun canInstall(context: Context): Boolean =
+        if (Build.VERSION.SDK_INT >= 26) {
+            context.packageManager.canRequestPackageInstalls()
+        } else {
+            @Suppress("DEPRECATION")
+            Settings.Secure.getInt(context.contentResolver, Settings.Secure.INSTALL_NON_MARKET_APPS, 0) == 1
+        }
+
+    /** Deletes downloaded update files; called on launch, after the installer has run. */
+    fun cleanup(context: Context) {
+        updateDir(context).listFiles()?.forEach { it.delete() }
     }
 
     /** Network call: downloads the APK, reporting progress 0–100. */
@@ -98,9 +150,7 @@ object Updater {
      */
     fun install(activity: Activity, apk: File): Boolean {
         if (Build.VERSION.SDK_INT >= 26 && !activity.packageManager.canRequestPackageInstalls()) {
-            activity.startActivity(
-                Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${activity.packageName}")),
-            )
+            openInstallPermission(activity)
             return false
         }
         val uri = if (Build.VERSION.SDK_INT >= 24) {
@@ -114,6 +164,15 @@ object Updater {
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK),
         )
         return true
+    }
+
+    /** Android 8+: the system page where the user allows this app to install updates. */
+    fun openInstallPermission(activity: Activity) {
+        if (Build.VERSION.SDK_INT >= 26) {
+            activity.startActivity(
+                Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${activity.packageName}")),
+            )
+        }
     }
 
     /** App-private cache on Android 7+ (shared through the FileProvider); readable storage before that. */
