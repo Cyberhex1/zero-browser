@@ -1,53 +1,38 @@
-# Draws the project icon (docs/icon.png, 512x512) and derives the launcher icons and TV banner from it.
-# Flat art: a TV with a globe on screen and a puzzle piece for add-ons.
+# Draws the Arcade-style Zero logo (a neon cyan circle crossed by a pink slash) and every icon made from it:
+#   docs/icon.png (512x512), legacy square and round launcher icons, adaptive-icon foreground layers,
+#   and the 320x180 Fire TV banner.
 Add-Type -AssemblyName System.Drawing
 $root = Split-Path $PSScriptRoot
 $res = Join-Path $root 'app\app\src\main\res'
+$fonts = New-Object System.Drawing.Text.PrivateFontCollection
+$fonts.AddFontFile((Join-Path $res '..\assets\fonts\SpaceGrotesk-Bold.ttf'))
+$family = $fonts.Families[0]
 
-function C([int]$r, [int]$g, [int]$b) { [System.Drawing.Color]::FromArgb(255, $r, $g, $b) }
-function RoundRect([float]$x, [float]$y, [float]$w, [float]$h, [float]$r) {
-    $p = New-Object System.Drawing.Drawing2D.GraphicsPath
-    $p.AddArc($x, $y, 2 * $r, 2 * $r, 180, 90)
-    $p.AddArc($x + $w - 2 * $r, $y, 2 * $r, 2 * $r, 270, 90)
-    $p.AddArc($x + $w - 2 * $r, $y + $h - 2 * $r, 2 * $r, 2 * $r, 0, 90)
-    $p.AddArc($x, $y + $h - 2 * $r, 2 * $r, 2 * $r, 90, 90)
-    $p.CloseFigure()
-    $p
+function C([int]$a, [int]$r, [int]$g, [int]$b) { [System.Drawing.Color]::FromArgb($a, $r, $g, $b) }
+$ground = C 255 7 7 11
+$cyan = @(34, 211, 238)
+$pink = @(244, 114, 182)
+
+# Strokes a path several times, wide and faint first, for a neon glow.
+function Glow($g, $path, $rgb, [float]$width) {
+    foreach ($step in @(@(3.4, 26), @(2.3, 48), @(1.6, 90), @(1.0, 255))) {
+        $pen = New-Object System.Drawing.Pen (C $step[1] $rgb[0] $rgb[1] $rgb[2]), ($width * $step[0])
+        $pen.StartCap = 'Round'; $pen.EndCap = 'Round'
+        $g.DrawPath($pen, $path)
+    }
 }
 
-# Draws the icon into a square of side $s at ($ox, $oy).
-function DrawIcon($g, [float]$ox, [float]$oy, [float]$s, [bool]$background) {
-    $u = $s / 512
-    if ($background) {
-        $g.FillPath((New-Object System.Drawing.SolidBrush (C 24 30 54)), (RoundRect $ox $oy $s $s (96 * $u)))
-    }
-    # stand
-    $stand = New-Object System.Drawing.SolidBrush (C 160 170 190)
-    $g.FillPath($stand, (RoundRect ($ox + 196 * $u) ($oy + 392 * $u) (120 * $u) (22 * $u) (11 * $u)))
-    $g.FillRectangle($stand, $ox + 244 * $u, $oy + 360 * $u, 24 * $u, 40 * $u)
-    # TV body and screen
-    $g.FillPath((New-Object System.Drawing.SolidBrush (C 225 230 240)), (RoundRect ($ox + 56 * $u) ($oy + 104 * $u) (400 * $u) (264 * $u) (34 * $u)))
-    $g.FillPath((New-Object System.Drawing.SolidBrush (C 30 136 229)), (RoundRect ($ox + 76 * $u) ($oy + 124 * $u) (360 * $u) (224 * $u) (20 * $u)))
-    # globe
-    $cx = $ox + 256 * $u; $cy = $oy + 236 * $u; $r = 84 * $u
-    $pen = New-Object System.Drawing.Pen ([System.Drawing.Color]::White), (12 * $u)
-    $g.DrawEllipse($pen, $cx - $r, $cy - $r, 2 * $r, 2 * $r)
-    $g.DrawEllipse($pen, $cx - $r * 0.45, $cy - $r, $r * 0.9, 2 * $r)
-    $g.DrawLine($pen, $cx, $cy - $r, $cx, $cy + $r)
-    $g.DrawLine($pen, $cx - $r, $cy, $cx + $r, $cy)
-    $g.DrawLine($pen, $cx - $r * 0.86, $cy - $r * 0.5, $cx + $r * 0.86, $cy - $r * 0.5)
-    $g.DrawLine($pen, $cx - $r * 0.86, $cy + $r * 0.5, $cx + $r * 0.86, $cy + $r * 0.5)
-    # puzzle piece (add-ons), bottom-right corner of the screen
-    $pc = New-Object System.Drawing.SolidBrush (C 255 167 38)
-    $px = $ox + 352 * $u; $py = $oy + 286 * $u; $pw = 92 * $u; $knob = 30 * $u
-    $piece = New-Object System.Drawing.Drawing2D.GraphicsPath
-    $piece.AddPath((RoundRect $px $py $pw $pw (12 * $u)), $false)
-    $piece.AddEllipse($px + $pw / 2 - $knob / 2, $py - $knob * 0.7, $knob, $knob)
-    $piece.AddEllipse($px - $knob * 0.7, $py + $pw / 2 - $knob / 2, $knob, $knob)
-    $piece.FillMode = 'Winding'
-    $outline = New-Object System.Drawing.Pen (C 24 30 54), (10 * $u)
-    $g.DrawPath($outline, $piece)
-    $g.FillPath($pc, $piece)
+# The logo, centred on (cx, cy), fitting a circle of radius r (glow included).
+function DrawLogo($g, [float]$cx, [float]$cy, [float]$r) {
+    $ring = $r * 0.64
+    $w = $r * 0.12
+    $circle = New-Object System.Drawing.Drawing2D.GraphicsPath
+    $circle.AddEllipse($cx - $ring, $cy - $ring, 2 * $ring, 2 * $ring)
+    Glow $g $circle $cyan $w
+    $slash = New-Object System.Drawing.Drawing2D.GraphicsPath
+    $d = $r * 0.62
+    $slash.AddLine($cx - $d, $cy + $d, $cx + $d, $cy - $d)
+    Glow $g $slash $pink $w
 }
 
 function NewCanvas([int]$w, [int]$h) {
@@ -64,25 +49,55 @@ function Save($bmp, [string]$path) {
     $bmp.Save($path, [System.Drawing.Imaging.ImageFormat]::Png)
 }
 
-# Project icon
-$bmp, $g = NewCanvas 512 512
-DrawIcon $g 0 0 512 $true
-Save $bmp (Join-Path $root 'docs\icon.png')
-
-# Launcher icons
-foreach ($d in @(@('mipmap-mdpi', 48), @('mipmap-hdpi', 72), @('mipmap-xhdpi', 96), @('mipmap-xxhdpi', 144), @('mipmap-xxxhdpi', 192))) {
-    $b, $gg = NewCanvas $d[1] $d[1]
-    $gg.InterpolationMode = 'HighQualityBicubic'
-    $gg.DrawImage($bmp, 0, 0, $d[1], $d[1])
-    Save $b (Join-Path $res "$($d[0])\ic_launcher.png")
+function RoundRect([float]$s, [float]$rad) {
+    $p = New-Object System.Drawing.Drawing2D.GraphicsPath
+    $p.AddArc(0, 0, 2 * $rad, 2 * $rad, 180, 90)
+    $p.AddArc($s - 2 * $rad, 0, 2 * $rad, 2 * $rad, 270, 90)
+    $p.AddArc($s - 2 * $rad, $s - 2 * $rad, 2 * $rad, 2 * $rad, 0, 90)
+    $p.AddArc(0, $s - 2 * $rad, 2 * $rad, 2 * $rad, 90, 90)
+    $p.CloseFigure()
+    $p
 }
 
-# TV banner 320x180: icon on the left, name on the right
+# Square icon on a black rounded tile (docs/icon.png and the legacy launcher icon).
+function SquareIcon([int]$s) {
+    $bmp, $g = NewCanvas $s $s
+    $g.FillPath((New-Object System.Drawing.SolidBrush $ground), (RoundRect $s ($s * 0.18)))
+    DrawLogo $g ($s / 2) ($s / 2) ($s * 0.40)
+    $bmp
+}
+
+# Round icon on a black disc.
+function RoundIcon([int]$s) {
+    $bmp, $g = NewCanvas $s $s
+    $g.FillEllipse((New-Object System.Drawing.SolidBrush $ground), 0, 0, $s, $s)
+    DrawLogo $g ($s / 2) ($s / 2) ($s * 0.38)
+    $bmp
+}
+
+# Adaptive-icon foreground: transparent 108dp canvas, logo inside the 66dp safe zone.
+function Foreground([int]$s) {
+    $bmp, $g = NewCanvas $s $s
+    DrawLogo $g ($s / 2) ($s / 2) ($s * 0.29)
+    $bmp
+}
+
+Save (SquareIcon 512) (Join-Path $root 'docs\icon.png')
+
+$densities = @(@('mdpi', 1.0), @('hdpi', 1.5), @('xhdpi', 2.0), @('xxhdpi', 3.0), @('xxxhdpi', 4.0))
+foreach ($d in $densities) {
+    $dir = Join-Path $res "mipmap-$($d[0])"
+    Save (SquareIcon ([int](48 * $d[1]))) (Join-Path $dir 'ic_launcher.png')
+    Save (RoundIcon ([int](48 * $d[1]))) (Join-Path $dir 'ic_launcher_round.png')
+    Save (Foreground ([int](108 * $d[1]))) (Join-Path $dir 'ic_launcher_foreground.png')
+}
+
+# Fire TV banner 320x180: logo on the left, ZERO/BROWSER on the right.
 $bn, $gb = NewCanvas 320 180
-$gb.FillRectangle((New-Object System.Drawing.SolidBrush (C 24 30 54)), 0, 0, 320, 180)
-DrawIcon $gb 8 26 128 $false
-$font = New-Object System.Drawing.Font 'Segoe UI', 34, ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
-$sf = New-Object System.Drawing.StringFormat
-$sf.LineAlignment = 'Center'
-$gb.DrawString("Zero`nBrowser", $font, [System.Drawing.Brushes]::White, [System.Drawing.RectangleF]::new(144, 0, 176, 180), $sf)
+$gb.FillRectangle((New-Object System.Drawing.SolidBrush $ground), 0, 0, 320, 180)
+DrawLogo $gb 74 90 58
+$font = New-Object System.Drawing.Font $family, 30, ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
+$gb.DrawString('ZERO', $font, (New-Object System.Drawing.SolidBrush (C 255 245 245 247)), 146, 50)
+$gb.DrawString('/', $font, (New-Object System.Drawing.SolidBrush (C 255 $pink[0] $pink[1] $pink[2])), 226, 50)
+$gb.DrawString('BROWSER', $font, (New-Object System.Drawing.SolidBrush (C 255 $cyan[0] $cyan[1] $cyan[2])), 146, 88)
 Save $bn (Join-Path $res 'drawable-xhdpi\banner.png')

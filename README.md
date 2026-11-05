@@ -6,7 +6,7 @@ A web browser for Amazon Fire TV (and other Android TV devices) that you drive w
 
 It is built on Mozilla's [GeckoView](https://geckoview.dev) (the Firefox engine), so it installs Firefox for Android add-ons from [addons.mozilla.org](https://addons.mozilla.org/android/).
 
-> Early prototype (v0.3.0). Formerly "TV Browser": if you installed v0.1.0, uninstall it first, since Zero Browser is a separate app.
+> Early prototype (v0.3.1). Formerly "TV Browser": if you installed v0.1.0, uninstall it first, since Zero Browser is a separate app.
 
 ## Which APK do I need?
 
